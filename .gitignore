@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment / Secrets
+.env
+firebase_options.dart
+lib/core/config/secrets.dart
+
+# VS Code settings (optional)
+.vscode/
