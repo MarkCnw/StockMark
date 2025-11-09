@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/stock_provider.dart';
-import '../widgets/search_box.dart';
-import '../widgets/stock_list.dart';
+import '../../../watchlist/presentation/widgets/search_box.dart';
+import '../../../watchlist/presentation/widgets/watchlist_item.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
