@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/stock_provider.dart';
+import '../../../home/presentation/providers/stock_provider.dart';
 
 class StockList extends StatelessWidget {
   const StockList({super.key});
