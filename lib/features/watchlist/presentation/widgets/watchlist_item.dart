@@ -12,6 +12,33 @@ class StockList extends StatelessWidget {
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
+
+        // ✅ ถ้ายังไม่ได้ค้นหา แสดงข้อความว่าง
+        if (!provider.isSearching) {
+          return const Center(
+            child: Text(
+              'Search for stocks',
+              style: TextStyle(
+                fontSize: 16,
+              ),
+            ),
+          );
+        }
+
+        // ✅ ถ้าค้นหาแล้วแต่ไม่มีผลลัพธ์
+        if (provider.stocks.isEmpty) {
+          return const Center(
+            child: Text(
+              'No results found',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+          );
+        }
+
+        // ✅ แสดงผลลัพธ์
         return ListView.builder(
           itemCount: provider.stocks.length,
           itemBuilder: (context, index) {
@@ -22,9 +49,7 @@ class StockList extends StatelessWidget {
               trailing: Text(
                 "\$${stock.price}",
                 style: TextStyle(
-                  color: stock.change >= 0
-                      ? Colors.green
-                      : Colors.red,
+                  color: stock.change >= 0 ? Colors.green : Colors.red,
                 ),
               ),
             );
