@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stockmark/core/constants/app_colors.dart';
 import '../../../home/presentation/providers/stock_provider.dart';
 
 class TopMoversSection extends StatefulWidget {
@@ -10,32 +11,32 @@ class TopMoversSection extends StatefulWidget {
 }
 
 class _TopMoversSectionState extends State<TopMoversSection> {
-  bool showGainers = true; // true = Gainers, false = Losers
+  bool showGainers = true;
 
   @override
   Widget build(BuildContext context) {
+    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Title
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
           child: Text(
             'Top Movers',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-            ),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
           ),
         ),
-
-        // Tabs (Gainers/Losers)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
               Expanded(
                 child: _buildTabButton(
+                  context: context,
                   label: 'Gainers',
                   isSelected: showGainers,
                   onTap: () => setState(() => showGainers = true),
@@ -44,6 +45,7 @@ class _TopMoversSectionState extends State<TopMoversSection> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildTabButton(
+                  context: context,
                   label: 'Losers',
                   isSelected: !showGainers,
                   onTap: () => setState(() => showGainers = false),
@@ -52,19 +54,15 @@ class _TopMoversSectionState extends State<TopMoversSection> {
             ],
           ),
         ),
-
         const SizedBox(height: 16),
-
-        // Horizontal Stock Cards
         SizedBox(
-          height: 160,
+          height: 180,
           child: Consumer<StockProvider>(
             builder: (context, provider, _) {
               if (provider.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              // Filter gainers or losers
               final filteredStocks = showGainers
                   ? provider.stocks.where((s) => s.change > 0).toList()
                   : provider.stocks.where((s) => s.change < 0).toList();
@@ -95,25 +93,34 @@ class _TopMoversSectionState extends State<TopMoversSection> {
   }
 
   Widget _buildTabButton({
+    required BuildContext context,
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF2B6BE5)
-              : Colors.grey.shade200,
+              ? (isDark ? AppColors.primaryBlueDark : AppColors.primaryBlue)
+              : (isDark
+                  ? AppColors.darkTabUnselected
+                  : AppColors.lightTabUnselected),
           borderRadius: BorderRadius.circular(25),
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey.shade600,
+              color: isSelected
+                  ? Colors.white
+                  : (isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary),
               fontWeight: FontWeight.w600,
               fontSize: 15,
             ),
@@ -140,60 +147,69 @@ class _StockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = change >= 0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      color: Colors.white,
       width: 160,
-      height: 160,
+      
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(16),
-
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Logo Circle
           CircleAvatar(
             radius: 20,
-
+            backgroundColor:
+                isDark ? AppColors.darkIconBg : AppColors.lightIconBg,
             child: Text(
               symbol.substring(0, 1),
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
               ),
             ),
           ),
           const SizedBox(height: 12),
-
-          // Symbol
           Text(
             symbol,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
           ),
-
-          // Company Name
           Text(
             name,
-            // style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+              fontSize: 12,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-
           const Spacer(),
-
-          // Price
           Text(
             '\$${price.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
           ),
-
-          // Change Percentage
           Text(
             '${isPositive ? '+' : ''}${change.toStringAsFixed(2)}%',
             style: TextStyle(

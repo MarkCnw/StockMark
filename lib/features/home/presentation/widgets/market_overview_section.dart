@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stockmark/core/constants/app_colors.dart';
 import '../../../home/presentation/providers/stock_provider.dart';
 
 class MarketOverviewSection extends StatelessWidget {
@@ -10,19 +11,16 @@ class MarketOverviewSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Title
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
           child: Text(
-            'Market Overview',
+            'Top 10 Highest Market Cap Stocks',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-            ),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
           ),
         ),
-
-        // Stock List
         Consumer<StockProvider>(
           builder: (context, provider, _) {
             if (provider.isLoading) {
@@ -81,16 +79,17 @@ class _MarketStockItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = change >= 0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-   
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-
+            color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -98,21 +97,22 @@ class _MarketStockItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Logo
           CircleAvatar(
             radius: 24,
-           
+            backgroundColor:
+                isDark ? AppColors.darkIconBg : AppColors.lightIconBg,
             child: Text(
               symbol.substring(0, 1),
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
               ),
             ),
           ),
           const SizedBox(width: 12),
-
-          // Symbol & Company Name
           Expanded(
             flex: 2,
             child: Column(
@@ -120,15 +120,17 @@ class _MarketStockItem extends StatelessWidget {
               children: [
                 Text(
                   symbol,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                 ),
                 Text(
                   name,
                   style: TextStyle(
-                  
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                     fontSize: 13,
                   ),
                   maxLines: 1,
@@ -137,8 +139,6 @@ class _MarketStockItem extends StatelessWidget {
               ],
             ),
           ),
-
-          // Mini Chart (Placeholder)
           Expanded(
             flex: 2,
             child: Container(
@@ -159,17 +159,15 @@ class _MarketStockItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-
-          // Price & Change
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 '\$${price.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
               ),
               Text(
                 '${isPositive ? '+' : ''}${change.toStringAsFixed(2)}%',

@@ -25,7 +25,7 @@ class _NavigationShellState extends State<NavigationShell> {
     // ✅ สร้าง screens ที่นี่แทน initState()
     final screens = [
       const HomeScreen(),
-      const WatchlistScreen(),
+      const NewsScreen(),
       const NewsScreen(),
       ProfileScreen(onToggleTheme: widget.onToggleTheme),
     ];

@@ -39,6 +39,8 @@ dependencies:
   google_fonts: ^6.3.2
   provider: ^6.1.5+1
   get_it: ^9.0.5
+  http: ^1.6.0
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +67,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/icons/navigation/
+    - .env
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -24,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
 
         title: const Text(
-          'Home'
+          'Stock Markets'
           // style: TextStyle(
           //   color: Colors.black87,
           //   fontWeight: FontWeight.w600,
