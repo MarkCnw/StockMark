@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:stockmark/core/app_theme.dart';
 import 'package:stockmark/core/navigation_shell.dart';
@@ -10,7 +11,8 @@ import 'package:stockmark/features/home/domain/repositories/stock_repository_imp
 import 'package:stockmark/features/home/domain/usecases/search_stocks_usecase.dart';
 import 'package:stockmark/features/home/presentation/providers/stock_provider.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const StockMarkApp());
 }
 
@@ -41,7 +43,8 @@ class _StockMarkAppState extends State<StockMarkApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => StockProvider(searchUseCase), // ✅ ใช้ usecase
+          // create: (_) => StockProvider(searchUseCase), // ✅ ใช้ usecase
+          create: (_) => StockProvider(repo),
         ),
       ],
       child: MaterialApp(
