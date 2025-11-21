@@ -1,5 +1,5 @@
 import 'package:stockmark/features/home/domain/entities/stock_entity.dart';
-import 'package:stockmark/features/home/data/repositories/stock_repository.dart';
+import 'package:stockmark/features/home/domain/repositories/stock_repository.dart';
 
 class SearchStocksUseCase {
   final StockRepository repository;
