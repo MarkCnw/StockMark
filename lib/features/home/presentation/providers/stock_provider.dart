@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stockmark/features/home/data/repositories/stock_repository.dart';
+import 'package:stockmark/features/home/domain/repositories/stock_repository.dart';
 import 'package:stockmark/features/home/domain/entities/stock_entity.dart';
 
 class StockProvider extends ChangeNotifier {
