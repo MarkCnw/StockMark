@@ -26,23 +26,37 @@ class StockApiService {
   }
 
   Future<Map<String, dynamic>> fetchSP500() async {
-    // ^GSPC คือรหัสของ S&P 500 ใน Finnhub/Yahoo Finance
-    final url = Uri.parse("$baseUrl/quote?symbol=^GSPC&token=$_apiKey");
+    // ใช้ symbol '^GSPC' สำหรับ S&P 500 Index (หรือ 'SPY' ถ้าตัวนี้ไม่ขึ้น)
+    final url = Uri.parse(
+      "$baseUrl/quote/%5EGSPC?apikey=$_apiKey",
+    ); // %5E คือเครื่องหมาย ^
 
-    final response = await http.get(url);
+    try {
+      final response = await http.get(url);
 
-    if (response.statusCode != 200) {
-      throw Exception("Failed to load S&P 500");
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        if (data.isNotEmpty) {
+          final item = data.first;
+          return {
+            'symbol': 'S&P 500',
+            'name': 'Standard & Poor\'s 500',
+            'price': (item['price'] as num).toDouble(),
+            'change': (item['changesPercentage'] as num)
+                .toDouble(), // FMP ใช้ key นี้
+          };
+        }
+      }
+    } catch (e) {
+      print("Error fetching S&P 500: $e");
     }
 
-    final data = jsonDecode(response.body);
-
-    // แปลงให้เป็น Map แบบที่เราใช้ (symbol, name, price, change)
+    // ถ้าพลาด ให้ส่งค่า 0 กลับไปก่อน (จะได้ไม่แดง)
     return {
       'symbol': 'S&P 500',
       'name': 'Standard & Poor\'s 500',
-      'price': data['c'], // c = current price
-      'change': data['dp'], // dp = percent change
+      'price': 0.0,
+      'change': 0.0,
     };
   }
 
