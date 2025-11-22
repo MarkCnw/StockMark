@@ -3,32 +3,82 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class MoversApiService {
-  final String _apiKey = dotenv.env['FMP_KEY'] ?? '';
-  final String baseUrl = "https://financialmodelingprep.com/api/v3";
+  final String _apiKey = dotenv.env['FINNHUB_API_KEY'] ?? '';
+  final String baseUrl = "https://finnhub.io/api/v1";
 
-  Future<List<dynamic>> fetchTrending() async {
-    // 💡 ไม้ตาย: ระบุชื่อหุ้นดังๆ เองเลย (Big Tech & Popular)
-    // วิธีนี้ฟรีแน่นอน และข้อมูลดูดีด้วย เพราะเป็นหุ้นที่คนรู้จัก
-    const symbols = "AAPL,NVDA,TSLA,AMZN,MSFT,GOOGL,META,AMD,NFLX,INTC,COIN";
-    
-    final url = Uri.parse("$baseUrl/quote/$symbols?apikey=$_apiKey");
-    return _fetchData(url);
-  }
+  // 📌 รายชื่อหุ้นยอดนิยม (Hard-code)
+  static const List<Map<String, String>> trendingStocks = [
+    {"symbol": "AAPL", "name": "Apple Inc."},
+    {"symbol": "MSFT", "name": "Microsoft Corp."},
+    {"symbol": "GOOGL", "name": "Alphabet Inc."},
+    {"symbol": "AMZN", "name": "Amazon.com Inc."},
+    {"symbol": "NVDA", "name": "NVIDIA Corp."},
+    {"symbol": "TSLA", "name": "Tesla Inc."},
+    {"symbol": "META", "name": "Meta Platforms Inc."},
+    {"symbol": "AMD", "name": "Advanced Micro Devices"},
+    {"symbol": "NFLX", "name": "Netflix Inc."},
+    {"symbol": "INTC", "name": "Intel Corp."},
+  ];
 
-  Future<List<dynamic>> _fetchData(Uri url) async {
+  // 📌 ดึงราคาหุ้นทีละตัวจาก Finnhub
+  Future<Map<String, dynamic>> fetchQuote(String symbol) async {
+    final url = Uri.parse("$baseUrl/quote?symbol=$symbol");
+
     try {
-      print("🚀 Sending: $url");
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {"X-Finnhub-Token": _apiKey},
+      );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as List<dynamic>;
-      } else {
-        print("❌ Error: ${response.statusCode} ${response.body}");
-        return [];
+        final data = jsonDecode(response.body);
+        
+        // ✅ ดึงข้อมูล
+        final currentPrice = data["c"]?.toDouble() ?? 0.0;
+        final previousClose = data["pc"]?.toDouble() ?? 0.0;
+        
+        // ✅ คำนวณ % change เอง (เทียบกับวันก่อน)
+        double percentChange = 0.0;
+        if (previousClose > 0) {
+          percentChange = ((currentPrice - previousClose) / previousClose) * 100;
+        }
+        
+        print("📊 $symbol: Current=$currentPrice, PrevClose=$previousClose, Change=${percentChange.toStringAsFixed(2)}%");
+        
+        return {
+          "symbol": symbol,
+          "price": currentPrice,
+          "change": percentChange,
+        };
       }
     } catch (e) {
-      print("API Error: $e");
-      return [];
+      print("❌ Error fetching $symbol: $e");
     }
+
+    return {
+      "symbol": symbol,
+      "price": 0.0,
+      "change": 0.0,
+    };
+  }
+
+  // 📌 ดึงหุ้นทั้งหมด (เรียก API ทีละตัว)
+  Future<List<Map<String, dynamic>>> fetchTrending() async {
+    List<Map<String, dynamic>> results = [];
+
+    for (var stock in trendingStocks) {
+      final quote = await fetchQuote(stock["symbol"]!);
+      results.add({
+        "symbol": stock["symbol"],
+        "name": stock["name"],
+        "price": quote["price"],
+        "change": quote["change"],
+      });
+
+      // ⏱️ Delay เล็กน้อยเพื่อไม่โดน Rate Limit
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+
+    return results;
   }
 }
