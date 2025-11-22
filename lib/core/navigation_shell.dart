@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stockmark/features/home/presentation/screens/home_screen.dart';
 import 'package:stockmark/features/news/presentation/screens/news_screen.dart';
 import 'package:stockmark/features/profile/profie_screen.dart';
-import 'package:stockmark/features/watchlist/presentation/screens/watchlist_screen.dart';
+
 import 'package:svg_flutter/svg.dart';
 
 class NavigationShell extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stockmark/core/constants/app_colors.dart';
-import '../../../home/presentation/providers/stock_provider.dart';
+import 'package:stockmark/features/home/presentation/providers/movers_provider.dart';
 
 class TopMoversSection extends StatefulWidget {
   const TopMoversSection({super.key});
@@ -11,72 +11,52 @@ class TopMoversSection extends StatefulWidget {
 }
 
 class _TopMoversSectionState extends State<TopMoversSection> {
-  bool showGainers = true;
-
   @override
   Widget build(BuildContext context) {
-    
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 1. หัวข้อใหม่
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
           child: Text(
-            'Top Movers',
+            'Trending Now 🔥', 
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 24,
                 ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildTabButton(
-                  context: context,
-                  label: 'Gainers',
-                  isSelected: showGainers,
-                  onTap: () => setState(() => showGainers = true),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildTabButton(
-                  context: context,
-                  label: 'Losers',
-                  isSelected: !showGainers,
-                  onTap: () => setState(() => showGainers = false),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
+        
+        // 2. ลบ Tab Button ทิ้งไปแล้ว (Code สะอาดขึ้นเยอะ)
+
+        // 3. List รายการหุ้น
         SizedBox(
           height: 180,
-          child: Consumer<StockProvider>(
+          child: Consumer<MoversProvider>(
             builder: (context, provider, _) {
+              
               if (provider.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              final filteredStocks = showGainers
-                  ? provider.stocks.where((s) => s.change > 0).toList()
-                  : provider.stocks.where((s) => s.change < 0).toList();
+              if (provider.errorMessage != null) {
+                return Center(child: Text(provider.errorMessage!));
+              }
 
-              if (filteredStocks.isEmpty) {
+              // ✅ ดึงข้อมูล Trending (ที่เราใส่ไว้ใน gainers) มาโชว์เลย
+              final currentList = provider.gainers; 
+
+              if (currentList.isEmpty) {
                 return const Center(child: Text('No data available'));
               }
 
               return ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: filteredStocks.length,
+                itemCount: currentList.length,
                 itemBuilder: (context, index) {
-                  final stock = filteredStocks[index];
+                  final stock = currentList[index];
                   return _StockCard(
                     symbol: stock.symbol,
                     name: stock.name,
@@ -89,44 +69,6 @@ class _TopMoversSectionState extends State<TopMoversSection> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildTabButton({
-    required BuildContext context,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? AppColors.primaryBlueDark : AppColors.primaryBlue)
-              : (isDark
-                  ? AppColors.darkTabUnselected
-                  : AppColors.lightTabUnselected),
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected
-                  ? Colors.white
-                  : (isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary),
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -151,7 +93,6 @@ class _StockCard extends StatelessWidget {
 
     return Container(
       width: 160,
-      
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
