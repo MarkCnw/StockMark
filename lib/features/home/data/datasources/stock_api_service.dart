@@ -8,9 +8,7 @@ class StockApiService {
 
   // 📌 ดึงหุ้น 10 อันดับ (ตัวอย่าง: Most Active ยังไม่มี API ตรงตัว ต้องเลือก symbol เอง)
   Future<List<dynamic>> fetchMostActive() async {
-    final url = Uri.parse(
-      "$baseUrl/stock/symbol?exchange=US",
-    );
+    final url = Uri.parse("$baseUrl/stock/symbol?exchange=US");
 
     final response = await http.get(
       url,
@@ -27,11 +25,30 @@ class StockApiService {
     return data.take(10).toList();
   }
 
+  Future<Map<String, dynamic>> fetchSP500() async {
+    // ^GSPC คือรหัสของ S&P 500 ใน Finnhub/Yahoo Finance
+    final url = Uri.parse("$baseUrl/quote?symbol=^GSPC&token=$_apiKey");
+
+    final response = await http.get(url);
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to load S&P 500");
+    }
+
+    final data = jsonDecode(response.body);
+
+    // แปลงให้เป็น Map แบบที่เราใช้ (symbol, name, price, change)
+    return {
+      'symbol': 'S&P 500',
+      'name': 'Standard & Poor\'s 500',
+      'price': data['c'], // c = current price
+      'change': data['dp'], // dp = percent change
+    };
+  }
+
   // 📌 ดึงราคาหุ้นแบบ simple
   Future<double> fetchPrice(String symbol) async {
-    final url = Uri.parse(
-      "$baseUrl/quote?symbol=$symbol",
-    );
+    final url = Uri.parse("$baseUrl/quote?symbol=$symbol");
 
     final response = await http.get(
       url,

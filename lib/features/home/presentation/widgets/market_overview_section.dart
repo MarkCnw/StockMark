@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stockmark/core/constants/app_colors.dart';
-import '../../../home/presentation/providers/stock_provider.dart';
+import '../providers/stock_provider.dart';
 
 class MarketOverviewSection extends StatelessWidget {
   const MarketOverviewSection({super.key});
@@ -14,173 +14,106 @@ class MarketOverviewSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
           child: Text(
-            'Top 10 Highest Market Cap Stocks',
+            'Market Index', // เปลี่ยนชื่อหัวข้อให้เหมาะสม
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 24,
                 ),
           ),
         ),
         Consumer<StockProvider>(
           builder: (context, provider, _) {
             if (provider.isLoading) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(),
-                ),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
-            if (provider.stocks.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Text('No data available'),
-                ),
-              );
+            if (provider.sp500 == null) {
+              return const Center(child: Text('Failed to load Market Data'));
             }
 
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: provider.stocks.length,
-              itemBuilder: (context, index) {
-                final stock = provider.stocks[index];
-                return _MarketStockItem(
-                  symbol: stock.symbol,
-                  name: stock.name,
-                  price: stock.price,
-                  change: stock.change,
-                );
-              },
+            final stock = provider.sp500!;
+            final isPositive = stock.change >= 0;
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+
+            // ✨ สร้างการ์ดใบใหญ่ใบเดียว (Big Card)
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : AppColors.primaryBlue, // ใช้สีเด่นๆ
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryBlue.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        stock.name, // Standard & Poor's 500
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          stock.symbol, // ^GSPC หรือ S&P 500
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    '\$${stock.price.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                        color: isPositive ? const Color(0xFF4CAF50) : const Color(0xFFFF5252),
+                        size: 24,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${isPositive ? '+' : ''}${stock.change.toStringAsFixed(2)}%',
+                        style: TextStyle(
+                          color: isPositive ? const Color(0xFF4CAF50) : const Color(0xFFFF5252),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             );
           },
         ),
       ],
-    );
-  }
-}
-
-class _MarketStockItem extends StatelessWidget {
-  final String symbol;
-  final String name;
-  final double price;
-  final double change;
-
-  const _MarketStockItem({
-    required this.symbol,
-    required this.name,
-    required this.price,
-    required this.change,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isPositive = change >= 0;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor:
-                isDark ? AppColors.darkIconBg : AppColors.lightIconBg,
-            child: Text(
-              symbol.substring(0, 1),
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.lightTextPrimary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  symbol,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                ),
-                Text(
-                  name,
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
-                    fontSize: 13,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: isPositive
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.red.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Icon(
-                  isPositive ? Icons.trending_up : Icons.trending_down,
-                  color: isPositive ? Colors.green : Colors.red,
-                  size: 32,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '\$${price.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-              ),
-              Text(
-                '${isPositive ? '+' : ''}${change.toStringAsFixed(2)}%',
-                style: TextStyle(
-                  color: isPositive ? Colors.green : Colors.red,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

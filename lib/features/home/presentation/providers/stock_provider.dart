@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:stockmark/features/home/domain/repositories/stock_repository.dart';
+import 'package:stockmark/features/home/data/repositories/stock_repository_impl.dart';
 import 'package:stockmark/features/home/domain/entities/stock_entity.dart';
+import 'package:stockmark/features/home/domain/usecases/get_sp500_usecase.dart';
 
 class StockProvider extends ChangeNotifier {
-  final StockRepository repository;
+  final GetSp500UseCase getSp500UseCase;
 
-  List<StockEntity> stocks = [];
+  StockEntity? sp500; // ✅ เหลือแค่ตัวนี้ตัวเดียว (พระเอกของเรา)
   bool isLoading = false;
 
-  StockProvider(this.repository);
+  // ตัด repository ออก เพราะไม่ได้ใช้แล้ว
+  StockProvider({
+    required this.getSp500UseCase, required StockRepositoryImpl repository,
+  });
 
-  Future<void> loadStocks() async {
+  Future<void> loadData() async {
     isLoading = true;
     notifyListeners();
 
-    stocks = await repository.getStocks();
+    try {
+      // โหลดแค่ S&P 500 อย่างเดียว
+      sp500 = await getSp500UseCase();
+    } catch (e) {
+      print("Error loading S&P 500: $e");
+    }
 
     isLoading = false;
     notifyListeners();
