@@ -10,14 +10,10 @@ class MoversRepositoryImpl implements MoversRepository {
 
   @override
   Future<List<StockEntity>> getTopGainers() async {
-    // เรียก fetchTrending (ที่เราทำ Loop ยิง 10 ตัว)
     final data = await api.fetchTrending();
 
     return data.map((item) {
-      // 1. แปลงเป็น Model
       final model = StockModel.fromJson(item);
-      
-      // 2. แปลงเป็น Entity เลย (❌ ห้ามมี .where กรองราคาตรงนี้เด็ดขาด!)
       return StockEntity(
         symbol: model.symbol,
         name: model.name,
@@ -29,6 +25,6 @@ class MoversRepositoryImpl implements MoversRepository {
 
   @override
   Future<List<StockEntity>> getTopLosers() async {
-    return []; // ไม่ได้ใช้
+    return [];
   }
 }

@@ -1,76 +1,56 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class StockApiService {
-  final String _apiKey = dotenv.env['FINNHUB_API_KEY'] ?? '';
-  final String baseUrl = "https://finnhub.io/api/v1";
+  // URL สำหรับดึงราคา S&P 500
+  final String quoteBaseUrl = "https://query2.finance.yahoo.com/v7/finance/quote";
+  
+  // URL สำหรับดึงรายการหุ้น (Most Active)
+  final String screenerBaseUrl = "https://query2.finance.yahoo.com/v1/finance/screener/predefined/saved";
 
-  // 📌 ดึงหุ้น 10 อันดับ (ตัวอย่าง: Most Active ยังไม่มี API ตรงตัว ต้องเลือก symbol เอง)
-  Future<List<dynamic>> fetchMostActive() async {
-    final url = Uri.parse("$baseUrl/stock/symbol?exchange=US");
-
-    final response = await http.get(
-      url,
-      headers: {"X-Finnhub-Token": _apiKey},
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception("Failed to load stocks");
-    }
-
-    final List data = jsonDecode(response.body);
-
-    // 📌 ตัวอย่าง: เอาแค่ 10 ตัวแรก
-    return data.take(10).toList();
-  }
-
+  // 1. ฟังก์ชันดึง S&P 500 (ตัวเดิมที่คุณใช้อยู่)
   Future<Map<String, dynamic>> fetchSP500() async {
-    // ใช้ symbol '^GSPC' สำหรับ S&P 500 Index (หรือ 'SPY' ถ้าตัวนี้ไม่ขึ้น)
-    final url = Uri.parse(
-      "$baseUrl/quote/%5EGSPC?apikey=$_apiKey",
-    ); // %5E คือเครื่องหมาย ^
+    final url = Uri.parse("$quoteBaseUrl?symbols=%5EGSPC"); 
 
     try {
+      print("🚀 Fetching S&P 500 (Yahoo): $url");
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
-        if (data.isNotEmpty) {
-          final item = data.first;
-          return {
-            'symbol': 'S&P 500',
-            'name': 'Standard & Poor\'s 500',
-            'price': (item['price'] as num).toDouble(),
-            'change': (item['changesPercentage'] as num)
-                .toDouble(), // FMP ใช้ key นี้
-          };
+        final json = jsonDecode(response.body);
+        final result = json['quoteResponse']['result'];
+
+        if (result != null && (result as List).isNotEmpty) {
+          return result[0] as Map<String, dynamic>;
         }
       }
     } catch (e) {
-      print("Error fetching S&P 500: $e");
+      print("❌ Exception: $e");
     }
 
-    // ถ้าพลาด ให้ส่งค่า 0 กลับไปก่อน (จะได้ไม่แดง)
     return {
-      'symbol': 'S&P 500',
-      'name': 'Standard & Poor\'s 500',
-      'price': 0.0,
-      'change': 0.0,
+      'symbol': '^GSPC',
+      'shortName': 'S&P 500',
+      'regularMarketPrice': 0.0,
+      'regularMarketChangePercent': 0.0,
     };
   }
 
-  // 📌 ดึงราคาหุ้นแบบ simple
-  Future<double> fetchPrice(String symbol) async {
-    final url = Uri.parse("$baseUrl/quote?symbol=$symbol");
+  // 2. ✅ เพิ่มฟังก์ชันนี้กลับเข้าไป (แก้ Error Undefined Method)
+  Future<List<dynamic>> fetchMostActive() async {
+    // ใช้ Yahoo Screener ดึงหุ้น Most Actives ฟรีๆ
+    final url = Uri.parse("$screenerBaseUrl?scrIds=most_actives&count=20&lang=en-US&region=US");
 
-    final response = await http.get(
-      url,
-      headers: {"X-Finnhub-Token": _apiKey},
-    );
-
-    final decoded = jsonDecode(response.body);
-
-    return decoded["c"] * 1.0; // c = current price
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        final quotes = json['finance']['result'][0]['quotes'];
+        return quotes as List<dynamic>;
+      }
+    } catch (e) {
+      print("Error fetching most active: $e");
+    }
+    return [];
   }
 }

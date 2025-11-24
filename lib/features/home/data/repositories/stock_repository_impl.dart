@@ -23,47 +23,54 @@ class StockRepositoryImpl implements StockRepository {
     }).toList();
   }
 
+  @override
   Future<StockEntity> getSP500Daily() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // 1. หาวันที่ปัจจุบัน (เอาแค่ ปี-เดือน-วัน ตัดเวลาทิ้ง)
     final String todayDate = DateTime.now().toIso8601String().split(
       'T',
     )[0];
 
-    // 2. เช็คว่า "วันที่บันทึกล่าสุด" ตรงกับ "วันนี้" ไหม?
     final String? lastFetchDate = prefs.getString('sp500_date');
     final String? cachedData = prefs.getString('sp500_data');
 
+    // 1. ลองเช็คของเก่าก่อน
     if (lastFetchDate == todayDate && cachedData != null) {
-      // 🟢 ถ้าตรงกัน: ใช้ของเดิม (ไม่ต้องเปลืองเน็ต)
-      print("📦 ใช้ข้อมูลเก่าจากเครื่อง (Cached)");
-      final jsonMap = jsonDecode(cachedData);
-      final model = StockModel.fromJson(jsonMap);
-      return _mapToEntity(model);
-    } else {
-      // 🔴 ถ้าไม่ตรง (คนละวัน): ยิง API ใหม่
-      print("🌐 ยิง API ใหม่ (New Fetch)");
       try {
-        final apiData = await api.fetchSP500();
-        final model = StockModel.fromJson(apiData);
+        final jsonMap = jsonDecode(cachedData);
+        final model = StockModel.fromJson(jsonMap);
 
-        // 3. เซฟข้อมูลใหม่ลงเครื่อง
-        await prefs.setString('sp500_date', todayDate); // จดวันที่
-        await prefs.setString(
-          'sp500_data',
-          jsonEncode(apiData),
-        ); // จดข้อมูล
-
-        return _mapToEntity(model);
-      } catch (e) {
-        // ถ้าเน็ตหลุด ให้พยายามเอาของเก่ามาโชว์แก้ขัดไปก่อน (ถ้ามี)
-        if (cachedData != null) {
-          final jsonMap = jsonDecode(cachedData);
-          return _mapToEntity(StockModel.fromJson(jsonMap));
+        // 🔥 ทีเด็ดอยู่ตรงนี้: เช็คว่า "ราคาต้องมากกว่า 0" ถึงจะยอมใช้ Cache
+        if (model.price > 0.1) {
+          print("📦 ใช้ข้อมูลเก่าจากเครื่อง (Cached)");
+          return _mapToEntity(model);
+        } else {
+          print("⚠️ ข้อมูลเก่าราคาเป็น 0 -> สั่งยิงใหม่!");
         }
-        rethrow;
+      } catch (e) {
+        print("⚠️ Cache เสียหาย -> สั่งยิงใหม่!");
       }
+    }
+
+    // 2. ถ้ามาถึงตรงนี้ แปลว่าต้องยิง API ใหม่แน่นอน
+    print("🌐 ยิง API ใหม่ (New Fetch S&P 500)");
+    try {
+      final apiData = await api.fetchSP500();
+      final model = StockModel.fromJson(apiData);
+
+      // ถ้าได้ข้อมูลจริง (ราคา > 0) ค่อยบันทึก
+      if (model.price > 0.1) {
+        await prefs.setString('sp500_date', todayDate);
+        await prefs.setString('sp500_data', jsonEncode(apiData));
+      }
+
+      return _mapToEntity(model);
+    } catch (e) {
+      // ถ้าเน็ตหลุดจริงๆ ให้พยายามเอาของเก่าเน่าๆ (ถ้ามี) มาโชว์แก้ขัด
+      if (cachedData != null) {
+        final jsonMap = jsonDecode(cachedData);
+        return _mapToEntity(StockModel.fromJson(jsonMap));
+      }
+      rethrow;
     }
   }
 
