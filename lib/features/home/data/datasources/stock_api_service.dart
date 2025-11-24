@@ -39,7 +39,7 @@ class StockApiService {
     };
   }
 
-  // 2. ฟังก์ชันดึง Most Active (อันนี้ใช้ได้อยู่แล้ว แต่อย่าลืมใส่ไว้กัน Error)
+  // 2. ฟังก์ชันดึง Most Active (อันนี้ใช้ได้อยู่แล้ว แต่อย่าลืมใส่ไว้กัน Error)กฟไกฟกฟกฟไกฟ
   Future<List<dynamic>> fetchMostActive() async {
      // ใช้รายชื่อหุ้นดัง (Quote) แทน Screener เพื่อความชัวร์
     const symbols = "NVDA,TSLA,AAPL,AMZN,MSFT,GOOGL,META,AMD,NFLX,INTC,PLTR,COIN,MSTR";
