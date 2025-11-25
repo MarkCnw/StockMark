@@ -14,11 +14,12 @@ class StockRepositoryImpl implements StockRepository {
   Future<List<StockEntity>> getStocks() async {
     final data = await api.fetchMostActive();
     return data.map((item) {
+      final model = StockModel.fromJson(item); // ใช้ Model ช่วยแปลง
       return StockEntity(
-        symbol: item['symbol'],
-        name: item['shortName'] ?? '',
-        price: item['regularMarketPrice']?.toDouble() ?? 0.0,
-        change: item['regularMarketChangePercent']?.toDouble() ?? 0.0,
+        symbol: model.symbol,
+        name: model.name,
+        price: model.price,
+        change: model.change,
       );
     }).toList();
   }
@@ -30,8 +31,9 @@ class StockRepositoryImpl implements StockRepository {
       'T',
     )[0];
 
-    final String? lastFetchDate = prefs.getString('sp500_date');
-    final String? cachedData = prefs.getString('sp500_data');
+    // ✅ แก้ตรงนี้: เปลี่ยน key เป็น _v3 เพื่อให้มันหาของเก่าไม่เจอ
+    final String? lastFetchDate = prefs.getString('sp500_date_v3');
+    final String? cachedData = prefs.getString('sp500_data_v3');
 
     // 1. ลองเช็คของเก่าก่อน
     if (lastFetchDate == todayDate && cachedData != null) {
@@ -39,33 +41,29 @@ class StockRepositoryImpl implements StockRepository {
         final jsonMap = jsonDecode(cachedData);
         final model = StockModel.fromJson(jsonMap);
 
-        // 🔥 ทีเด็ดอยู่ตรงนี้: เช็คว่า "ราคาต้องมากกว่า 0" ถึงจะยอมใช้ Cache
         if (model.price > 0.1) {
           print("📦 ใช้ข้อมูลเก่าจากเครื่อง (Cached)");
           return _mapToEntity(model);
-        } else {
-          print("⚠️ ข้อมูลเก่าราคาเป็น 0 -> สั่งยิงใหม่!");
         }
       } catch (e) {
         print("⚠️ Cache เสียหาย -> สั่งยิงใหม่!");
       }
     }
 
-    // 2. ถ้ามาถึงตรงนี้ แปลว่าต้องยิง API ใหม่แน่นอน
+    // 2. ยิงใหม่
     print("🌐 ยิง API ใหม่ (New Fetch S&P 500)");
     try {
       final apiData = await api.fetchSP500();
       final model = StockModel.fromJson(apiData);
 
-      // ถ้าได้ข้อมูลจริง (ราคา > 0) ค่อยบันทึก
       if (model.price > 0.1) {
-        await prefs.setString('sp500_date', todayDate);
-        await prefs.setString('sp500_data', jsonEncode(apiData));
+        // ✅ แก้ตรงนี้: บันทึกด้วย key ใหม่ _v3
+        await prefs.setString('sp500_date_v3', todayDate);
+        await prefs.setString('sp500_data_v3', jsonEncode(apiData));
       }
 
       return _mapToEntity(model);
     } catch (e) {
-      // ถ้าเน็ตหลุดจริงๆ ให้พยายามเอาของเก่าเน่าๆ (ถ้ามี) มาโชว์แก้ขัด
       if (cachedData != null) {
         final jsonMap = jsonDecode(cachedData);
         return _mapToEntity(StockModel.fromJson(jsonMap));
@@ -85,7 +83,6 @@ class StockRepositoryImpl implements StockRepository {
 
   @override
   Future<List<StockEntity>> searchStocks(String query) async {
-    // เดี๋ยวค่อยทำทีหลัง
     return [];
   }
 }

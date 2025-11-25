@@ -12,49 +12,56 @@ class StockApiService {
 
   // 1. ฟังก์ชันดึง S&P 500 (ต้นเหตุที่ราคาเป็น 0)
   Future<Map<String, dynamic>> fetchSP500() async {
-    final url = Uri.parse("$quoteBaseUrl?symbols=%5EGSPC");
+    final url = Uri.parse("https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=1d&range=1d");
 
     try {
-      print("🚀 Fetching S&P 500 (Yahoo): $url");
-
-      // ✅ เพิ่ม headers เพื่อหลอก Yahoo ว่าเราคือคน (User-Agent)
-      final response = await http.get(
-        url,
-        headers: {
-          "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-          "Accept": "application/json",
-        },
-      );
-
-      print(
-        "📡 Status Code: ${response.statusCode}",
-      ); // ดูว่าตอบอะไรกลับมา
+      print("🚀 Fetching S&P 500 (via Chart API): $url");
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        final result = json['quoteResponse']['result'];
+        final result = json['chart']['result'];
 
         if (result != null && (result as List).isNotEmpty) {
-          final data = result[0];
-          print(
-            "✅ Yahoo S&P 500 Data: ${data['regularMarketPrice']}",
-          ); // ถ้าขึ้นบรรทัดนี้ คือรอด!
-          return data as Map<String, dynamic>;
-        } else {
-          print("⚠️ Result is empty");
+          final meta = result[0]['meta'];
+          
+          // ✅ แก้ตรงนี้: เติม ? หลัง num (as num?) เพื่อบอกว่า "อาจจะว่างนะ"
+          // และใช้ ?? 0.0 เพื่อบอกว่า "ถ้าว่าง ให้ใช้ 0.0 แทน"
+          final double price = (meta['regularMarketPrice'] as num?)?.toDouble() ?? 
+                               (meta['chartPreviousClose'] as num?)?.toDouble() ?? 
+                               0.0;
+                               
+          final double prevClose = (meta['previousClose'] as num?)?.toDouble() ?? 
+                                   (meta['chartPreviousClose'] as num?)?.toDouble() ?? 
+                                   price; // ถ้าไม่มีราคาปิด ให้ใช้ราคาปัจจุบันกันหาร 0
+
+          // คำนวณ % (กันเหนียว: ถ้าตัวหารเป็น 0 ให้ค่า change เป็น 0)
+          double change = 0.0;
+          if (prevClose > 0) {
+            change = ((price - prevClose) / prevClose) * 100;
+          }
+
+          print("✅ Yahoo Chart Data: Price=$price, Change=$change%");
+          
+          return {
+            // ✅ symbol ควรเป็นตัวย่อ (จะไปโชว์ในป้ายมุมขวา)
+            'symbol': 'SPY', 
+            
+            // ✅ shortName ควรเป็นชื่อเต็ม (จะไปโชว์เป็นหัวข้อใหญ่)
+            'shortName': 'SPDR S&P 500 ETF Trust', 
+            
+            'regularMarketPrice': price,
+            'regularMarketChangePercent': change,
+          };
         }
-      } else {
-        print("❌ Yahoo Error: ${response.body}");
       }
     } catch (e) {
       print("❌ Exception S&P 500: $e");
     }
 
-    // ถ้าพัง ส่งค่า 0 ไปก่อน
     return {
-      'symbol': '^GSPC',
-      'shortName': 'S&P 500',
+      'symbol': 'S&SPY ',
+      'shortName': 'SPDR S&P 500 ETF Trust',
       'regularMarketPrice': 0.0,
       'regularMarketChangePercent': 0.0,
     };

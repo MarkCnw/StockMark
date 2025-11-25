@@ -10,8 +10,24 @@ class MoversRepositoryImpl implements MoversRepository {
 
   @override
   Future<List<StockEntity>> getTopGainers() async {
-    final data = await api.fetchTrending();
+    final data = await api.fetchGainers();
+    return _mapToEntity(data);
+  }
 
+  @override
+  Future<List<StockEntity>> getTopLosers() async {
+    final data = await api.fetchLosers();
+    return _mapToEntity(data);
+  }
+
+  @override
+  Future<List<StockEntity>> getTrending() async {
+    final data = await api.fetchTrending();
+    return _mapToEntity(data);
+  }
+
+  // Helper function ช่วยแปลงร่าง (จะได้ไม่ต้องเขียนซ้ำ)
+  List<StockEntity> _mapToEntity(List<dynamic> data) {
     return data.map((item) {
       final model = StockModel.fromJson(item);
       return StockEntity(
@@ -21,10 +37,5 @@ class MoversRepositoryImpl implements MoversRepository {
         change: model.change,
       );
     }).toList();
-  }
-
-  @override
-  Future<List<StockEntity>> getTopLosers() async {
-    return [];
   }
 }
