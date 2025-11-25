@@ -1,43 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:stockmark/features/home/domain/entities/stock_entity.dart';
-// Import UseCases ที่เราสร้างไว้
-import 'package:stockmark/features/home/domain/usecases/get_top_gainers_usecase.dart';
-import 'package:stockmark/features/home/domain/usecases/get_top_losers_usecase.dart';
+import 'package:stockmark/features/home/domain/repositories/movers_repository.dart';
+
+// ในไฟล์ lib/features/home/presentation/providers/movers_provider.dart
 
 class MoversProvider extends ChangeNotifier {
-  // 1. เรียกใช้ UseCase แทน Repository
-  final GetTopGainersUsecase getTopGainersUsecase;
-  final GetTopLosersUsecase getTopLosersUsecase;
+  final MoversRepository repository; 
 
-  // 2. แยก State ชัดเจน (รองรับ Tab Switch)
   List<StockEntity> gainers = [];
   List<StockEntity> losers = [];
+  List<StockEntity> trending = [];
   
   bool isLoading = false;
-  String? errorMessage; // เก็บ Error ไว้โชว์ User
+  String? errorMessage; // ✅ เพิ่มตัวนี้ แก้ Error 1
 
-  MoversProvider({
-    required this.getTopGainersUsecase,
-    required this.getTopLosersUsecase,
-  });
+  MoversProvider({required this.repository}); // ✅ Constructor ต้องรับแบบ named parameter
 
   Future<void> loadMovers() async {
-    isLoading = true;
-    errorMessage = null;
-    notifyListeners();
-
+    // ... (logic เดิม) ...
     try {
-      // ⚡ แก้ตรงนี้: เรียกแค่ Gainers (Trending) ตัวเดียวพอ!
-      // ไม่ต้องรอ Losers แล้ว เพราะ UI เราไม่ได้โชว์
-      gainers = await getTopGainersUsecase();
-      
-      // losers = ... (ไม่ต้องโหลด)
+      // โหลด 3 อย่างพร้อมกัน
+      final results = await Future.wait([
+        repository.getTopGainers(),
+        repository.getTopLosers(),
+        repository.getTrending(),
+      ]);
+
+      gainers = results[0];
+      losers = results[1];
+      trending = results[2];
       
     } catch (e) {
-      errorMessage = "Failed to load data: $e";
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      print("Error loading movers: $e");
+      errorMessage = "Failed to load market data."; // ✅ แก้ Error 1
     }
+
+    isLoading = false;
+    notifyListeners();
   }
 }

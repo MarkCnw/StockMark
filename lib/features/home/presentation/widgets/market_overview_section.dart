@@ -14,7 +14,7 @@ class MarketOverviewSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
           child: Text(
-            'Market Index', // เปลี่ยนชื่อหัวข้อให้เหมาะสม
+            'SPDR S&P 500 ETF Trust', // เปลี่ยนชื่อหัวข้อให้เหมาะสม
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 24,
