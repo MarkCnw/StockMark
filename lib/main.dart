@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:stockmark/core/app_theme.dart';
+import 'package:stockmark/core/theme/app_theme.dart';
 import 'package:stockmark/core/navigation_shell.dart';
 
 // Import Stock
@@ -84,8 +84,8 @@ class _StockMarkAppState extends State<StockMarkApp> {
         
         debugShowCheckedModeBanner: false,
         themeMode: _themeMode,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
         home: NavigationShell(onToggleTheme: _toggleTheme),
       ),
     );

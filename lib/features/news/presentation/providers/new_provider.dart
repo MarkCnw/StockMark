@@ -6,27 +6,46 @@ class NewProvider extends ChangeNotifier {
   final NewsRepository repository;
 
   List<NewsEntity> news = [];
+  List<NewsEntity> hotNews = []; // 🔥 เพิ่ม Hot News
   bool isLoading = true;
+  bool isHotNewsLoading = true; // 🔥 Loading state สำหรับ Hot News
 
   NewProvider(this.repository);
 
   Future<void> loadNews() async {
-    // 1. ประกาศเริ่มงาน (Start)
     isLoading = true;
     notifyListeners();
 
     try {
-      // 2. วิ่งไปเอาของ (Fetch) และ 3. รับของเข้าคลัง (Assign)
-      // ✅ ใช้ await เพื่อรอของจาก repository
-      news = await repository.getNews(); 
-      
+      news = await repository.getNews();
     } catch (e) {
-      // (แถม) กันเหนียวเผื่อสะดุดล้ม
-      print("Error loading news: $e");
+      news = [];
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
+  }
 
-    // 4. ประกาศจบงาน (Finish)
-    isLoading = false;
+  // 🔥 โหลด Hot News
+  Future<void> loadHotNews() async {
+    isHotNewsLoading = true;
     notifyListeners();
+
+    try {
+      hotNews = await repository. getHotNews();
+    } catch (e) {
+      hotNews = [];
+    } finally {
+      isHotNewsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // 🔥 โหลดทั้งสองอย่างพร้อมกัน
+  Future<void> loadAllNews() async {
+    await Future.wait([
+      loadNews(),
+      loadHotNews(),
+    ]);
   }
 }
