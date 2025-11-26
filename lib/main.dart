@@ -15,6 +15,8 @@ import 'package:stockmark/features/home/data/datasources/movers_api_service.dart
 import 'package:stockmark/features/home/data/repositories/movers_repository_impl.dart';
 // import UseCase ไม่ต้องใช้แล้ว ลบออกได้เลย
 import 'package:stockmark/features/home/presentation/providers/movers_provider.dart';
+import 'package:stockmark/features/news/data/repositories/mock_news_repository.dart';
+import 'package:stockmark/features/news/presentation/providers/new_provider.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
@@ -49,6 +51,8 @@ class _StockMarkAppState extends State<StockMarkApp> {
     final moversApi = MoversApiService();
     final moversRepo = MoversRepositoryImpl(moversApi);
 
+    final newsRepo = MockNewsRepository();
+
     return MultiProvider(
       providers: [
         // Provider 1: Stock (S&P 500)
@@ -66,9 +70,18 @@ class _StockMarkAppState extends State<StockMarkApp> {
             repository: moversRepo, 
           )..loadMovers(), 
         ),
+
+        ChangeNotifierProvider(
+          create: (_) => NewProvider(
+            newsRepo, // Inject Mock Repository
+          ), // We call loadNews() inside NewsScreen's initState, so no need to call it here
+        ),
+
+        
       ],
       child: MaterialApp(
         title: 'StockMark',
+        
         debugShowCheckedModeBanner: false,
         themeMode: _themeMode,
         theme: AppTheme.lightTheme,
