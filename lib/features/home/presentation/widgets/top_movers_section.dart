@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stockmark/core/constants/app_colors.dart';
+
+import 'package:stockmark/core/constants/app_dimensions.dart';
+import 'package:stockmark/core/constants/app_dutation.dart';
+import 'package:stockmark/core/constants/app_font_sizes.dart';
+import 'package:stockmark/core/constants/app_opacity.dart';
+import 'package:stockmark/core/constants/app_radius.dart';
+import 'package:stockmark/core/constants/app_spacing.dart';
+import 'package:stockmark/core/constants/app_string.dart';
+import 'package:stockmark/core/extensions/context_extensions.dart';
 import 'package:stockmark/features/home/domain/entities/stock_entity.dart';
 import 'package:stockmark/features/home/presentation/providers/movers_provider.dart';
 
+/// Top Movers Section - แสดงหุ้นที่มีการเปลี่ยนแปลงมากที่สุด
 class TopMoversSection extends StatefulWidget {
   const TopMoversSection({super.key});
 
@@ -12,187 +22,220 @@ class TopMoversSection extends StatefulWidget {
 }
 
 class _TopMoversSectionState extends State<TopMoversSection> {
-  // ตัวแปรสำหรับสลับแท็บ Gainers (true) / Losers (false)
-  bool showGainers = true;
+  bool _showGainers = true;
 
   @override
   Widget build(BuildContext context) {
     return Consumer<MoversProvider>(
       builder: (context, provider, _) {
-        // ถ้ากำลังโหลด ให้โชว์ Loading ตรงกลาง
         if (provider.isLoading) {
-          return const SizedBox(
-            height: 200,
-            child: Center(child: CircularProgressIndicator()),
-          );
+          return const _LoadingState();
         }
 
-        // ถ้ามี Error
         if (provider.errorMessage != null) {
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Center(
-              child: Text(
-                'Error: ${provider.errorMessage}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          );
+          return _ErrorState(message: provider.errorMessage!);
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ==================================================
-            // 🟢 ส่วนที่ 1: Top Movers (Gainers & Losers)
-            // ==================================================
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-              child: Text(
-                'Top Movers',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-
-            // ปุ่มสลับแท็บ (Toggle Buttons)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildTabButton(
-                      context: context,
-                      label: 'Gainers',
-                      isSelected: showGainers,
-                      color: const Color(0xFF00C853), // สีเขียว
-                      onTap: () => setState(() => showGainers = true),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildTabButton(
-                      context: context,
-                      label: 'Losers',
-                      isSelected: !showGainers,
-                      color: const Color(0xFFFF3D00), // สีแดงส้ม
-                      onTap: () => setState(() => showGainers = false),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // ลิสต์รายการหุ้น Top Movers
-            SizedBox(
-              height: 180, // ความสูงของการ์ด
-              child: _buildStockList(
-                showGainers ? provider.gainers : provider.losers,
-              ),
-            ),
-
-            // ==================================================
-            // 🔥 ส่วนที่ 2: Trending Now (Most Active)
-            // ==================================================
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-              child: Row(
-                children: [
-                  Text(
-                    'Trending Now',
-                    style: Theme.of(context).textTheme.titleLarge
-                        ?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24,
-                        ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.local_fire_department,
-                    color: Colors.orange,
-                  ),
-                ],
-              ),
-            ),
-
-            // ลิสต์รายการหุ้น Trending
-            SizedBox(
-              height: 180,
-              child: _buildStockList(provider.trending),
-            ),
-          ],
-        );
+        return _buildContent(provider);
       },
     );
   }
 
-  // Widget สำหรับสร้างลิสต์แนวนอน
-  Widget _buildStockList(List<StockEntity> stocks) {
-    if (stocks.isEmpty) {
-      return const Center(
+  Widget _buildContent(MoversProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ===== TOP MOVERS =====
+        _buildSectionHeader(AppStrings.topMovers),
+        _buildToggleButtons(),
+        const SizedBox(height: AppSpacing.lg),
+        _StockList(
+          stocks: _showGainers ? provider.gainers : provider.losers,
+        ),
+
+        // ===== TRENDING =====
+        _buildSectionHeaderWithIcon(
+          AppStrings.trendingNow,
+          Icons.local_fire_department,
+        ),
+        _StockList(stocks: provider.trending),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xxl,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
+      child: Text(title, style: context.headlineSmall),
+    );
+  }
+
+  Widget _buildSectionHeaderWithIcon(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xxl,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
+      child: Row(
+        children: [
+          Text(title, style: context.headlineSmall),
+          const SizedBox(width: AppSpacing.sm),
+          Icon(icon, color: AppColors.warning),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleButtons() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Row(
+        children: [
+          Expanded(
+            child: _TabButton(
+              label: AppStrings.gainers,
+              isSelected: _showGainers,
+              color: AppColors.stockUp,
+              onTap: () => setState(() => _showGainers = true),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: _TabButton(
+              label: AppStrings.losers,
+              isSelected: !_showGainers,
+              color: AppColors.stockDown,
+              onTap: () => setState(() => _showGainers = false),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Loading State
+class _LoadingState extends StatelessWidget {
+  const _LoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: AppDimensions.stockCardHeight + AppSpacing.xl,
+      child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+/// Error State
+class _ErrorState extends StatelessWidget {
+  final String message;
+
+  const _ErrorState({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Center(
         child: Text(
-          'No data available',
-          style: TextStyle(color: Colors.grey),
+          '${AppStrings.error}: $message',
+          style: context.bodyMedium.copyWith(color: AppColors.error),
+        ),
+      ),
+    );
+  }
+}
+
+/// Stock List - รายการหุ้นแนวนอน
+class _StockList extends StatelessWidget {
+  final List<StockEntity> stocks;
+
+  const _StockList({required this.stocks});
+
+  @override
+  Widget build(BuildContext context) {
+    if (stocks.isEmpty) {
+      return SizedBox(
+        height: AppDimensions.stockCardHeight,
+        child: Center(
+          child: Text(
+            AppStrings.noDataAvailable,
+            style: context.bodyMedium.copyWith(
+              color: context.textSecondaryColor,
+            ),
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: stocks.length,
-      itemBuilder: (context, index) {
-        final stock = stocks[index];
-        return _StockCard(
-          symbol: stock.symbol,
-          name: stock.name,
-          price: stock.price,
-          change: stock.change,
-        );
-      },
+    return SizedBox(
+      height: AppDimensions.stockCardHeight,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        itemCount: stocks.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
+        itemBuilder: (context, index) {
+          final stock = stocks[index];
+          return _StockCard(
+            symbol: stock.symbol,
+            name: stock.name,
+            price: stock.price,
+            change: stock.change,
+          );
+        },
+      ),
     );
   }
+}
 
-  // Widget ปุ่มกดสลับแท็บ
-  Widget _buildTabButton({
-    required BuildContext context,
-    required String label,
-    required bool isSelected,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+/// Tab Button - ปุ่มสลับ Gainers/Losers
+class _TabButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
 
+  const _TabButton({
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        duration: AppDurations.fast,
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         decoration: BoxDecoration(
           color: isSelected
-              ? color.withOpacity(0.2) // พื้นหลังจางๆ เมื่อเลือก
-              : (isDark
+              ? color.withOpacity(AppOpacity.light)
+              : (context.isDark
                     ? AppColors.darkTabUnselected
                     : AppColors.lightTabUnselected),
-          borderRadius: BorderRadius.circular(25),
-          border: isSelected
-              ? Border.all(color: color, width: 1.5)
-              : Border.all(color: Colors.transparent, width: 1.5),
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: AppDimensions.borderWidthThick,
+          ),
         ),
         child: Center(
           child: Text(
             label,
-            style: TextStyle(
-              color: isSelected
-                  ? color // สีตัวอักษรตามธีมปุ่ม
-                  : (isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary),
+            style: context.labelLarge.copyWith(
+              color: isSelected ? color : context.textSecondaryColor,
               fontWeight: FontWeight.w700,
-              fontSize: 15,
             ),
           ),
         ),
@@ -201,7 +244,7 @@ class _TopMoversSectionState extends State<TopMoversSection> {
   }
 }
 
-// การ์ดแสดงข้อมูลหุ้นแต่ละตัว
+/// Stock Card - การ์ดแสดงข้อมูลหุ้น
 class _StockCard extends StatelessWidget {
   final String symbol;
   final String name;
@@ -218,139 +261,167 @@ class _StockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = change >= 0;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // เลือกสีตามการเปลี่ยนแปลง
     final changeColor = isPositive
-        ? const Color(0xFF00C853)
-        : const Color(0xFFFF3D00);
+        ? AppColors.stockUp
+        : AppColors.stockDown;
 
     return Container(
-      width: 150,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black12 : Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      width: AppDimensions.stockCardWidth,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: _buildDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // โลโก้และชื่อย่อ
-          Row(
-            children: [
-              // ✅ ใส่โค้ดใหม่: โหลดรูปโลโก้ (พร้อมกันเหนียว ถ้าไม่มีรูปให้โชว์ตัวอักษรเหมือนเดิม)
-              ClipOval(
-                child: Image.network(
-                  // 💡 URL มหัศจรรย์: แค่เปลี่ยน symbol ก็ได้โลโก้เลย (ฟรี)
-                  'https://assets.parqet.com/logos/symbol/$symbol?format=png',
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    // กรณีโหลดรูปไม่ได้ (เช่น SPY หรือหุ้นแปลกๆ) ให้กลับมาโชว์ตัวอักษรย่อ
-                    return Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkIconBg
-                            : AppColors.lightIconBg,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        symbol.substring(0, 1),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.lightTextPrimary,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  symbol,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+          _buildHeader(context),
+          _buildCompanyName(context),
+          const SizedBox(height: AppSpacing.sm),
+          _buildPriceSection(context, changeColor, isPositive),
+        ],
+      ),
+    );
+  }
 
-          // ชื่อเต็มบริษัท
-          Text(
-            name,
-            style: TextStyle(
-              color: isDark ? Colors.white60 : Colors.black54,
-              fontSize: 12,
-            ),
-            maxLines: 1,
+  BoxDecoration _buildDecoration(BuildContext context) {
+    return BoxDecoration(
+      color: context.cardColor,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      boxShadow: [
+        BoxShadow(
+          color: context.isDark
+              ? Colors.black.withOpacity(AppOpacity.subtle)
+              : Colors.grey.withOpacity(AppOpacity.subtle),
+          blurRadius: AppDimensions.shadowBlurMd,
+          offset: AppDimensions.shadowOffset,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      children: [
+        _StockLogo(symbol: symbol),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            symbol,
+            style: context.titleSmall,
             overflow: TextOverflow.ellipsis,
           ),
+        ),
+      ],
+    );
+  }
 
-          const SizedBox(height: 8),
+  Widget _buildCompanyName(BuildContext context) {
+    return Text(
+      name,
+      style: context.bodySmall,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
 
-          // ราคาและการเปลี่ยนแปลง
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '\$${price.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: changeColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isPositive
-                          ? Icons.arrow_drop_up
-                          : Icons.arrow_drop_down,
-                      color: changeColor,
-                      size: 16,
-                    ),
-                    Text(
-                      '${change.abs().toStringAsFixed(2)}%',
-                      style: TextStyle(
-                        color: changeColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+  Widget _buildPriceSection(
+    BuildContext context,
+    Color changeColor,
+    bool isPositive,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '\$${price.toStringAsFixed(2)}',
+          style: context.titleMedium.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        _ChangeChip(
+          change: change,
+          color: changeColor,
+          isPositive: isPositive,
+        ),
+      ],
+    );
+  }
+}
+
+/// Stock Logo - โลโก้หุ้น
+class _StockLogo extends StatelessWidget {
+  final String symbol;
+
+  const _StockLogo({required this.symbol});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipOval(
+      child: Image.network(
+        'https://assets.parqet.com/logos/symbol/$symbol? format=png',
+        width: AppDimensions.stockLogoSize,
+        height: AppDimensions.stockLogoSize,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    return Container(
+      width: AppDimensions.stockLogoSize,
+      height: AppDimensions.stockLogoSize,
+      decoration: BoxDecoration(
+        color: context.isDark
+            ? AppColors.darkIconBg
+            : AppColors.lightIconBg,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        symbol.isNotEmpty ? symbol.substring(0, 1) : '',
+        style: context.titleMedium.copyWith(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
+
+/// Change Chip - แสดงการเปลี่ยนแปลงของราคา
+class _ChangeChip extends StatelessWidget {
+  final double change;
+  final Color color;
+  final bool isPositive;
+
+  const _ChangeChip({
+    required this.change,
+    required this.color,
+    required this.isPositive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isPositive ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+            color: color,
+            size: AppDimensions.iconSm,
+          ),
+          Text(
+            '${change.abs().toStringAsFixed(2)}%',
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: AppFontSize.sm,
+            ),
           ),
         ],
       ),

@@ -11,7 +11,8 @@ class StockProvider extends ChangeNotifier {
 
   // ตัด repository ออก เพราะไม่ได้ใช้แล้ว
   StockProvider({
-    required this.getSp500UseCase, required StockRepositoryImpl repository,
+    required this.getSp500UseCase,
+    required StockRepositoryImpl repository,
   });
 
   Future<void> loadData() async {
