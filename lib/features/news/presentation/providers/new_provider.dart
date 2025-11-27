@@ -5,7 +5,8 @@ import 'package:stockmark/features/news/domain/repositories/news_repository.dart
 class NewProvider extends ChangeNotifier {
   final NewsRepository repository;
 
-  NewProvider(this.repository);
+  // ✅ แก้ไข Constructor ให้ถูกต้อง
+  NewProvider({required this.repository});
 
   // ===== STATE =====
   List<NewsEntity> _news = [];
@@ -21,10 +22,8 @@ class NewProvider extends ChangeNotifier {
   bool get isHotNewsLoading => _isHotNewsLoading;
   String? get errorMessage => _errorMessage;
 
-  // ✅ เพิ่ม getter นี้
+  // ✅ Helper Getters
   bool get isEmpty => _news.isEmpty && _hotNews.isEmpty;
-
-  // ✅ เพิ่ม getter สำหรับ error (optional)
   bool get hasError => _errorMessage != null;
 
   // ===== ACTIONS =====
@@ -67,6 +66,7 @@ class NewProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // โหลด 2 อย่างพร้อมกันเพื่อความรวดเร็ว
       final results = await Future.wait([
         repository.getNews(),
         repository.getHotNews(),
@@ -77,6 +77,7 @@ class NewProvider extends ChangeNotifier {
       _errorMessage = null;
     } catch (e) {
       _errorMessage = e.toString();
+      // ถ้าโหลดไม่ผ่าน ให้เคลียร์ข้อมูลเก่า (หรือจะเก็บไว้ก็ได้)
       _news = [];
       _hotNews = [];
     } finally {

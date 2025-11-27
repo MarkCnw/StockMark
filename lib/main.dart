@@ -15,7 +15,9 @@ import 'package:stockmark/features/home/data/datasources/movers_api_service.dart
 import 'package:stockmark/features/home/data/repositories/movers_repository_impl.dart';
 // import UseCase ไม่ต้องใช้แล้ว ลบออกได้เลย
 import 'package:stockmark/features/home/presentation/providers/movers_provider.dart';
-import 'package:stockmark/features/news/data/repositories/mock_news_repository.dart';
+import 'package:stockmark/features/news/data/datasources/news_api_service.dart';
+
+import 'package:stockmark/features/news/data/repositories/news_repository_impl.dart';
 import 'package:stockmark/features/news/presentation/providers/new_provider.dart';
 
 Future<void> main() async {
@@ -51,7 +53,9 @@ class _StockMarkAppState extends State<StockMarkApp> {
     final moversApi = MoversApiService();
     final moversRepo = MoversRepositoryImpl(moversApi);
 
-    final newsRepo = MockNewsRepository();
+    
+    final newsApi = NewsApiService(); // สร้าง API Service
+    final newsRepo = NewsRepositoryImpl(newsApi); // ยัดใส่ Repo
 
     return MultiProvider(
       providers: [
@@ -71,10 +75,11 @@ class _StockMarkAppState extends State<StockMarkApp> {
           )..loadMovers(), 
         ),
 
+        // ✅ Provider 3: News (ใช้ Repo ของจริงแล้ว)
         ChangeNotifierProvider(
           create: (_) => NewProvider(
-            newsRepo, // Inject Mock Repository
-          ), // We call loadNews() inside NewsScreen's initState, so no need to call it here
+            repository: newsRepo, // ส่ง newsRepo เข้าไป
+          ),
         ),
 
         
