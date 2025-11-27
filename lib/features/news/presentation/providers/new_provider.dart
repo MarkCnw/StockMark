@@ -5,47 +5,84 @@ import 'package:stockmark/features/news/domain/repositories/news_repository.dart
 class NewProvider extends ChangeNotifier {
   final NewsRepository repository;
 
-  List<NewsEntity> news = [];
-  List<NewsEntity> hotNews = []; // 🔥 เพิ่ม Hot News
-  bool isLoading = true;
-  bool isHotNewsLoading = true; // 🔥 Loading state สำหรับ Hot News
-
   NewProvider(this.repository);
 
+  // ===== STATE =====
+  List<NewsEntity> _news = [];
+  List<NewsEntity> _hotNews = [];
+  bool _isLoading = false;
+  bool _isHotNewsLoading = false;
+  String? _errorMessage;
+
+  // ===== GETTERS =====
+  List<NewsEntity> get news => _news;
+  List<NewsEntity> get hotNews => _hotNews;
+  bool get isLoading => _isLoading;
+  bool get isHotNewsLoading => _isHotNewsLoading;
+  String? get errorMessage => _errorMessage;
+
+  // ✅ เพิ่ม getter นี้
+  bool get isEmpty => _news.isEmpty && _hotNews.isEmpty;
+
+  // ✅ เพิ่ม getter สำหรับ error (optional)
+  bool get hasError => _errorMessage != null;
+
+  // ===== ACTIONS =====
+
   Future<void> loadNews() async {
-    isLoading = true;
+    _isLoading = true;
     notifyListeners();
 
     try {
-      news = await repository.getNews();
+      _news = await repository.getNews();
+      _errorMessage = null;
     } catch (e) {
-      news = [];
+      _errorMessage = e.toString();
+      _news = [];
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  // 🔥 โหลด Hot News
   Future<void> loadHotNews() async {
-    isHotNewsLoading = true;
+    _isHotNewsLoading = true;
     notifyListeners();
 
     try {
-      hotNews = await repository. getHotNews();
+      _hotNews = await repository.getHotNews();
+      _errorMessage = null;
     } catch (e) {
-      hotNews = [];
+      _errorMessage = e.toString();
+      _hotNews = [];
     } finally {
-      isHotNewsLoading = false;
+      _isHotNewsLoading = false;
       notifyListeners();
     }
   }
 
-  // 🔥 โหลดทั้งสองอย่างพร้อมกัน
   Future<void> loadAllNews() async {
-    await Future.wait([
-      loadNews(),
-      loadHotNews(),
-    ]);
+    _isLoading = true;
+    _isHotNewsLoading = true;
+    notifyListeners();
+
+    try {
+      final results = await Future.wait([
+        repository.getNews(),
+        repository.getHotNews(),
+      ]);
+
+      _news = results[0];
+      _hotNews = results[1];
+      _errorMessage = null;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _news = [];
+      _hotNews = [];
+    } finally {
+      _isLoading = false;
+      _isHotNewsLoading = false;
+      notifyListeners();
+    }
   }
 }
