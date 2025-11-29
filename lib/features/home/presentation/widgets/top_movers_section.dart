@@ -32,7 +32,7 @@ class _TopMoversSectionState extends State<TopMoversSection> {
           return const _LoadingState();
         }
 
-        if (provider.errorMessage != null) {
+        if (provider.errorMessage != null) {//กฟกฟก
           return _ErrorState(message: provider.errorMessage!);
         }
 
