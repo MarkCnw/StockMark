@@ -4,8 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:stockmark/core/errors/exceptions.dart';
 
 class MoversApiService {
-  final String baseUrl =
-      "https://query2. finance.yahoo.com/v1/finance/screener/predefined/saved";
+  final String baseUrl = "https://query2.finance.yahoo.com/v1/finance/screener/predefined/saved";
 
   Future<List<dynamic>> fetchGainers() async {
     return _fetchFromYahoo("day_gainers");
@@ -20,33 +19,27 @@ class MoversApiService {
   }
 
   Future<List<dynamic>> _fetchFromYahoo(String type) async {
-    final url = Uri.parse(
-      "$baseUrl?scrIds=$type&count=10&lang=en-US&region=US",
-    );
-
+    final url = Uri.parse("$baseUrl?scrIds=$type&count=10&lang=en-US&region=US");
+    
     try {
       final response = await http.get(url);
-
+      
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        final result = json['finance']? ['result'];
-        
-        if (result == null || result.isEmpty) {
-          throw NotFoundException('No $type data available');
-        }
-        
-        return result[0]['quotes'] as List<dynamic>;
+        return json['finance']['result'][0]['quotes'] as List<dynamic>;
       } else if (response.statusCode == 401) {
+        // ✅ ใช้ Exception ที่สร้างไว้
         throw const UnauthorizedException();
       } else if (response.statusCode == 404) {
-        throw const NotFoundException();  // ✅ แก้ไขแล้ว
+        throw const NotFoundException();
       } else {
         throw ServerException(
-          'Server error ${response.statusCode}',
+          'Server error: ${response.statusCode}',
           statusCode: response.statusCode,
         );
       }
     } on SocketException {
+      // ✅ ไม่มีเน็ต
       throw const NetworkException();
     } on FormatException {
       throw const ServerException('Invalid data format');

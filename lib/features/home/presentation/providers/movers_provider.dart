@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:stockmark/core/errors/error_handler.dart';
 import 'package:stockmark/core/errors/failures.dart';
 import 'package:stockmark/features/home/domain/entities/stock_entity.dart';
@@ -18,25 +17,18 @@ class MoversProvider extends ChangeNotifier {
   Failure? _failure;
 
   // ===== GETTERS =====
-  List<StockEntity> get gainers => _gainers;  // ✅ แก้ชื่อ getter ให้ตรง
+  List<StockEntity> get gainers => _gainers;
   List<StockEntity> get losers => _losers;
   List<StockEntity> get trending => _trending;
   bool get isLoading => _isLoading;
+  Failure? get failure => _failure;
+  
   bool get hasError => _failure != null;
-  bool get hasData => _gainers.isNotEmpty || _losers.isNotEmpty || _trending. isNotEmpty;  // ✅ เพิ่ม
-  Failure? get failure => _failure;  // ✅ เพิ่ม expose failure
-
-  String get errorMessage =>
+  bool get isEmpty => _gainers.isEmpty && _losers.isEmpty && _trending. isEmpty;
+  String get errorMessage => 
       _failure != null ? ErrorHandler.getErrorMessage(_failure!) : '';
 
   // ===== ACTIONS =====
-
-  /// ✅ Clear error state
-  void clearError() {
-    _failure = null;
-    notifyListeners();
-  }
-
   Future<void> loadMovers() async {
     _isLoading = true;
     _failure = null;
@@ -63,9 +55,14 @@ class MoversProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ Refresh data
-  Future<void> refresh() async {
-    clearError();
+  /// Retry loading data
+  Future<void> retry() async {
     await loadMovers();
+  }
+
+  /// Clear error state
+  void clearError() {
+    _failure = null;
+    notifyListeners();
   }
 }

@@ -8,15 +8,16 @@ import 'package:stockmark/core/navigation_shell.dart';
 import 'package:stockmark/features/home/data/datasources/stock_api_service.dart';
 import 'package:stockmark/features/home/data/repositories/stock_repository_impl.dart';
 import 'package:stockmark/features/home/domain/usecases/get_sp500_usecase.dart';
-import 'package:stockmark/features/home/presentation/providers/stock_provider.dart';
+import 'package:stockmark/features/home/presentation/providers/movers_provider.dart';
 
 // Import Movers
 import 'package:stockmark/features/home/data/datasources/movers_api_service.dart';
 import 'package:stockmark/features/home/data/repositories/movers_repository_impl.dart';
-// import UseCase ไม่ต้องใช้แล้ว ลบออกได้เลย
-import 'package:stockmark/features/home/presentation/providers/movers_provider.dart';
-import 'package:stockmark/features/news/data/datasources/news_api_service.dart';
 
+import 'package:stockmark/features/home/presentation/providers/stock_provider.dart';
+
+// Import News
+import 'package:stockmark/features/news/data/datasources/news_api_service.dart';
 import 'package:stockmark/features/news/data/repositories/news_repository_impl.dart';
 import 'package:stockmark/features/news/presentation/providers/new_provider.dart';
 
@@ -37,8 +38,9 @@ class _StockMarkAppState extends State<StockMarkApp> {
 
   void _toggleTheme() {
     setState(() {
-      _themeMode =
-          _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+      _themeMode = _themeMode == ThemeMode.dark
+          ? ThemeMode.light
+          : ThemeMode.dark;
     });
   }
 
@@ -53,40 +55,33 @@ class _StockMarkAppState extends State<StockMarkApp> {
     final moversApi = MoversApiService();
     final moversRepo = MoversRepositoryImpl(moversApi);
 
-    
-    final newsApi = NewsApiService(); // สร้าง API Service
-    final newsRepo = NewsRepositoryImpl(newsApi); // ยัดใส่ Repo
+    // 3. Setup News
+    final newsApi = NewsApiService();
+    final newsRepo = NewsRepositoryImpl(newsApi);
 
     return MultiProvider(
       providers: [
         // Provider 1: Stock (S&P 500)
         ChangeNotifierProvider(
           create: (_) => StockProvider(
-            getSp500UseCase: getSp500UseCase, 
-            repository: stockRepo, // ✅ เพิ่มตัวนี้กลับเข้าไปตามที่ StockProvider ต้องการ
+            getSp500UseCase: getSp500UseCase,
+            // ❌ ลบ repository: stockRepo ออก (ไม่ต้องใช้แล้ว)
           )..loadData(),
         ),
 
         // Provider 2: Movers List (Gainers/Losers/Trending)
         ChangeNotifierProvider(
-          create: (_) => MoversProvider(
-            // ✅ ส่ง repository เข้าไป (ตามที่ MoversProvider ต้องการ)
-            repository: moversRepo, 
-          )..loadMovers(), 
+          create: (_) =>
+              MoversProvider(repository: moversRepo)..loadMovers(),
         ),
 
-        // ✅ Provider 3: News (ใช้ Repo ของจริงแล้ว)
+        // Provider 3: News
         ChangeNotifierProvider(
-          create: (_) => NewProvider(
-            repository: newsRepo, // ส่ง newsRepo เข้าไป
-          ),
+          create: (_) => NewProvider(newsRepo)..loadAllNews(),
         ),
-
-        
       ],
       child: MaterialApp(
         title: 'StockMark',
-        
         debugShowCheckedModeBanner: false,
         themeMode: _themeMode,
         theme: AppTheme.light,
