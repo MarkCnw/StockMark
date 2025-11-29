@@ -55,7 +55,7 @@ class MoversProvider extends ChangeNotifier {
     }
   }
 
-  /// Retry loading data
+  /// Retry loading 
   Future<void> retry() async {
     await loadMovers();
   }
