@@ -7,7 +7,6 @@ import 'package:stockmark/features/news/domain/repositories/news_repository.dart
 class NewProvider extends ChangeNotifier {
   final NewsRepository repository;
 
-  // ✅ แก้ไข Constructor ให้ถูกต้อง
   NewProvider({required this.repository});
 
   // ===== STATE =====
@@ -15,7 +14,7 @@ class NewProvider extends ChangeNotifier {
   List<NewsEntity> _hotNews = [];
   bool _isLoading = false;
   bool _isHotNewsLoading = false;
-  Failure? _failure; // ✅ เปลี่ยนจาก String?  _errorMessage
+  Failure? _failure;
 
   // ===== GETTERS =====
   List<NewsEntity> get news => _news;
@@ -23,15 +22,23 @@ class NewProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isHotNewsLoading => _isHotNewsLoading;
   bool get hasError => _failure != null;
+  bool get hasData => _news.isNotEmpty || _hotNews.isNotEmpty;  // ✅ เพิ่ม
+  Failure? get failure => _failure;  // ✅ เพิ่ม expose failure
 
-  // ✅ ใช้ ErrorHandler แปลงเป็นข้อความ
   String get errorMessage =>
       _failure != null ? ErrorHandler.getErrorMessage(_failure!) : '';
 
   // ===== ACTIONS =====
 
+  /// ✅ Clear error state
+  void clearError() {
+    _failure = null;
+    notifyListeners();
+  }
+
   Future<void> loadNews() async {
     _isLoading = true;
+    _failure = null;  // ✅ Reset error ก่อน load
     notifyListeners();
 
     try {
@@ -47,10 +54,11 @@ class NewProvider extends ChangeNotifier {
 
   Future<void> loadHotNews() async {
     _isHotNewsLoading = true;
+    _failure = null;  // ✅ Reset error ก่อน load
     notifyListeners();
 
     try {
-      _hotNews = await repository.getHotNews();
+      _hotNews = await repository. getHotNews();
     } catch (e) {
       _failure = ErrorHandler.handleException(e);
       _hotNews = [];
@@ -63,10 +71,10 @@ class NewProvider extends ChangeNotifier {
   Future<void> loadAllNews() async {
     _isLoading = true;
     _isHotNewsLoading = true;
+    _failure = null;  // ✅ Reset error ก่อน load
     notifyListeners();
 
     try {
-      // โหลด 2 อย่างพร้อมกันเพื่อความรวดเร็ว
       final results = await Future.wait([
         repository.getNews(),
         repository.getHotNews(),
@@ -76,7 +84,6 @@ class NewProvider extends ChangeNotifier {
       _hotNews = results[1];
     } catch (e) {
       _failure = ErrorHandler.handleException(e);
-      // ถ้าโหลดไม่ผ่าน ให้เคลียร์ข้อมูลเก่า (หรือจะเก็บไว้ก็ได้)
       _news = [];
       _hotNews = [];
     } finally {
@@ -84,5 +91,11 @@ class NewProvider extends ChangeNotifier {
       _isHotNewsLoading = false;
       notifyListeners();
     }
+  }
+
+  /// ✅ Refresh data
+  Future<void> refresh() async {
+    clearError();
+    await loadAllNews();
   }
 }

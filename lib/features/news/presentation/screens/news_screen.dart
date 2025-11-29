@@ -48,12 +48,47 @@ class _NewsScreenState extends State<NewsScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (provider.isEmpty) {
+        // ✅ แก้ไขตรงนี้
+        if (!provider.hasData && !provider.hasError) {
           return _buildEmptyState();
+        }
+
+        // ✅ เพิ่ม error handling
+        if (provider.hasError) {
+          return _buildErrorState(provider);
         }
 
         return _buildContent(provider);
       },
+    );
+  }
+
+  // ✅ เพิ่ม Error State Widget
+  Widget _buildErrorState(NewProvider provider) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48,
+            color: context.textSecondaryColor,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            provider.errorMessage,
+            style: context.bodyMedium.copyWith(
+              color: context.textSecondaryColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          ElevatedButton(
+            onPressed: () => provider.refresh(),
+            child: const Text('Try Again'),
+          ),
+        ],
+      ),
     );
   }
 
