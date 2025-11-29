@@ -12,13 +12,13 @@ class StockProvider extends ChangeNotifier {
   // ===== STATE =====
   StockEntity? _sp500;
   bool _isLoading = false;
-  Failure? _failure; // ✅ เพิ่ม Failure
+  Failure? _failure;  // ✅ เพิ่ม Failure
 
   // ===== GETTERS =====
-  StockEntity? get sp500 => _sp500;
+  StockEntity?  get sp500 => _sp500;
   bool get isLoading => _isLoading;
   bool get hasError => _failure != null;
-  String get errorMessage =>
+  String get errorMessage => 
       _failure != null ? ErrorHandler.getErrorMessage(_failure!) : '';
 
   // ===== ACTIONS =====

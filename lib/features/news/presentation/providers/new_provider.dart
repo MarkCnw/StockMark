@@ -7,36 +7,37 @@ import 'package:stockmark/features/news/domain/repositories/news_repository.dart
 class NewProvider extends ChangeNotifier {
   final NewsRepository repository;
 
-  // ✅ แก้ไข Constructor ให้ถูกต้อง
-  NewProvider({required this.repository});
+  NewProvider(this.repository);
 
   // ===== STATE =====
   List<NewsEntity> _news = [];
   List<NewsEntity> _hotNews = [];
   bool _isLoading = false;
   bool _isHotNewsLoading = false;
-  Failure? _failure; // ✅ เปลี่ยนจาก String?  _errorMessage
+  Failure? _failure;  // ✅ เปลี่ยนจาก String?  _errorMessage
 
   // ===== GETTERS =====
   List<NewsEntity> get news => _news;
   List<NewsEntity> get hotNews => _hotNews;
   bool get isLoading => _isLoading;
   bool get isHotNewsLoading => _isHotNewsLoading;
+  bool get isEmpty => _news.isEmpty && _hotNews.isEmpty;
   bool get hasError => _failure != null;
-
+  
   // ✅ ใช้ ErrorHandler แปลงเป็นข้อความ
-  String get errorMessage =>
+  String get errorMessage => 
       _failure != null ? ErrorHandler.getErrorMessage(_failure!) : '';
 
   // ===== ACTIONS =====
-
   Future<void> loadNews() async {
     _isLoading = true;
+    _failure = null;
     notifyListeners();
 
     try {
       _news = await repository.getNews();
     } catch (e) {
+      // ✅ ใช้ ErrorHandler แปลง Exception → Failure
       _failure = ErrorHandler.handleException(e);
       _news = [];
     } finally {
@@ -47,6 +48,7 @@ class NewProvider extends ChangeNotifier {
 
   Future<void> loadHotNews() async {
     _isHotNewsLoading = true;
+    _failure = null;
     notifyListeners();
 
     try {
@@ -63,12 +65,12 @@ class NewProvider extends ChangeNotifier {
   Future<void> loadAllNews() async {
     _isLoading = true;
     _isHotNewsLoading = true;
+    _failure = null;
     notifyListeners();
 
     try {
-      // โหลด 2 อย่างพร้อมกันเพื่อความรวดเร็ว
       final results = await Future.wait([
-        repository.getNews(),
+        repository. getNews(),
         repository.getHotNews(),
       ]);
 
@@ -76,7 +78,6 @@ class NewProvider extends ChangeNotifier {
       _hotNews = results[1];
     } catch (e) {
       _failure = ErrorHandler.handleException(e);
-      // ถ้าโหลดไม่ผ่าน ให้เคลียร์ข้อมูลเก่า (หรือจะเก็บไว้ก็ได้)
       _news = [];
       _hotNews = [];
     } finally {

@@ -7,34 +7,37 @@ import 'package:stockmark/features/home/domain/repositories/movers_repository.da
 class MoversProvider extends ChangeNotifier {
   final MoversRepository repository;
 
+  MoversProvider({required this.repository});
+
   // ===== STATE =====
   List<StockEntity> _gainers = [];
   List<StockEntity> _losers = [];
   List<StockEntity> _trending = [];
   bool _isLoading = false;
-  Failure? _failure; // ✅ เปลี่ยนจาก String? errorMessage
+  Failure? _failure;
 
   // ===== GETTERS =====
-  List<StockEntity> get gainer => _gainers;
+  List<StockEntity> get gainers => _gainers;
   List<StockEntity> get losers => _losers;
   List<StockEntity> get trending => _trending;
   bool get isLoading => _isLoading;
-  String get errorMessage =>
+  Failure? get failure => _failure;
+  
+  bool get hasError => _failure != null;
+  bool get isEmpty => _gainers.isEmpty && _losers.isEmpty && _trending. isEmpty;
+  String get errorMessage => 
       _failure != null ? ErrorHandler.getErrorMessage(_failure!) : '';
 
-  MoversProvider({
-    required this.repository,
-  }); // ✅ Constructor ต้องรับแบบ named parameter
-
+  // ===== ACTIONS =====
   Future<void> loadMovers() async {
     _isLoading = true;
     _failure = null;
     notifyListeners();
+
     try {
-      // โหลด 3 อย่างพร้อมกัน
       final results = await Future.wait([
         repository.getTopGainers(),
-        repository.getTopLosers(),
+        repository. getTopLosers(),
         repository.getTrending(),
       ]);
 
@@ -46,8 +49,20 @@ class MoversProvider extends ChangeNotifier {
       _gainers = [];
       _losers = [];
       _trending = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-    _isLoading = false;
+  }
+
+  /// Retry loading 
+  Future<void> retry() async {
+    await loadMovers();
+  }
+
+  /// Clear error state
+  void clearError() {
+    _failure = null;
     notifyListeners();
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stockmark/core/constants/app_colors.dart';
-
 import 'package:stockmark/core/constants/app_dimensions.dart';
 import 'package:stockmark/core/constants/app_dutation.dart';
 import 'package:stockmark/core/constants/app_font_sizes.dart';
@@ -28,12 +27,16 @@ class _TopMoversSectionState extends State<TopMoversSection> {
   Widget build(BuildContext context) {
     return Consumer<MoversProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading) {
+        if (provider. isLoading) {
           return const _LoadingState();
         }
 
-        if (provider.errorMessage != null) {
-          return _ErrorState(message: provider.errorMessage!);
+        // ✅ ใช้ hasError แทน errorMessage != null
+        if (provider.hasError) {
+          return _ErrorState(
+            message: provider.errorMessage,
+            onRetry: provider.retry,
+          );
         }
 
         return _buildContent(provider);
@@ -78,8 +81,8 @@ class _TopMoversSectionState extends State<TopMoversSection> {
   Widget _buildSectionHeaderWithIcon(String title, IconData icon) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.xxl,
+        AppSpacing. lg,
+        AppSpacing. xxl,
         AppSpacing.lg,
         AppSpacing.lg,
       ),
@@ -106,7 +109,7 @@ class _TopMoversSectionState extends State<TopMoversSection> {
               onTap: () => setState(() => _showGainers = true),
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: AppSpacing. md),
           Expanded(
             child: _TabButton(
               label: AppStrings.losers,
@@ -121,7 +124,7 @@ class _TopMoversSectionState extends State<TopMoversSection> {
   }
 }
 
-/// Loading State
+/// Loading State - แสดงขณะโหลดข้อมูล
 class _LoadingState extends StatelessWidget {
   const _LoadingState();
 
@@ -134,20 +137,60 @@ class _LoadingState extends StatelessWidget {
   }
 }
 
-/// Error State
+/// Error State - แสดงเมื่อเกิดข้อผิดพลาด
 class _ErrorState extends StatelessWidget {
   final String message;
+  final VoidCallback? onRetry;
 
-  const _ErrorState({required this.message});
+  const _ErrorState({
+    required this.message,
+    this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Center(
-        child: Text(
-          '${AppStrings.error}: $message',
-          style: context.bodyMedium.copyWith(color: AppColors.error),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Error Icon
+            Icon(
+              Icons. error_outline,
+              color: AppColors.error,
+              size: AppDimensions.iconXl,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            
+            // Error Message
+            Text(
+              message,
+              style: context.bodyMedium.copyWith(color: AppColors.error),
+              textAlign: TextAlign.center,
+            ),
+            
+            // Retry Button
+            if (onRetry != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              ElevatedButton. icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: Text(AppStrings. retry),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.md,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -181,7 +224,7 @@ class _StockList extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        itemCount: stocks.length,
+        itemCount: stocks. length,
         separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
         itemBuilder: (context, index) {
           final stock = stocks[index];
@@ -205,7 +248,7 @@ class _TabButton extends StatelessWidget {
   final VoidCallback onTap;
 
   const _TabButton({
-    required this.label,
+    required this. label,
     required this.isSelected,
     required this.color,
     required this.onTap,
@@ -222,8 +265,8 @@ class _TabButton extends StatelessWidget {
           color: isSelected
               ? color.withOpacity(AppOpacity.light)
               : (context.isDark
-                    ? AppColors.darkTabUnselected
-                    : AppColors.lightTabUnselected),
+                  ? AppColors.darkTabUnselected
+                  : AppColors.lightTabUnselected),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,
@@ -261,13 +304,11 @@ class _StockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = change >= 0;
-    final changeColor = isPositive
-        ? AppColors.stockUp
-        : AppColors.stockDown;
+    final changeColor = isPositive ? AppColors.stockUp : AppColors.stockDown;
 
     return Container(
       width: AppDimensions.stockCardWidth,
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing. lg),
       decoration: _buildDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +331,7 @@ class _StockCard extends StatelessWidget {
         BoxShadow(
           color: context.isDark
               ? Colors.black.withOpacity(AppOpacity.subtle)
-              : Colors.grey.withOpacity(AppOpacity.subtle),
+              : Colors.grey. withOpacity(AppOpacity. subtle),
           blurRadius: AppDimensions.shadowBlurMd,
           offset: AppDimensions.shadowOffset,
         ),
@@ -319,7 +360,7 @@ class _StockCard extends StatelessWidget {
       name,
       style: context.bodySmall,
       maxLines: 1,
-      overflow: TextOverflow.ellipsis,
+      overflow: TextOverflow. ellipsis,
     );
   }
 
@@ -333,7 +374,7 @@ class _StockCard extends StatelessWidget {
       children: [
         Text(
           '\$${price.toStringAsFixed(2)}',
-          style: context.titleMedium.copyWith(fontWeight: FontWeight.w800),
+          style: context.titleMedium. copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: AppSpacing.xs),
         _ChangeChip(
@@ -368,17 +409,15 @@ class _StockLogo extends StatelessWidget {
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
       width: AppDimensions.stockLogoSize,
-      height: AppDimensions.stockLogoSize,
+      height: AppDimensions. stockLogoSize,
       decoration: BoxDecoration(
-        color: context.isDark
-            ? AppColors.darkIconBg
-            : AppColors.lightIconBg,
+        color: context.isDark ? AppColors.darkIconBg : AppColors.lightIconBg,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
       child: Text(
-        symbol.isNotEmpty ? symbol.substring(0, 1) : '',
-        style: context.titleMedium.copyWith(fontWeight: FontWeight.bold),
+        symbol. isNotEmpty ? symbol. substring(0, 1) : '',
+        style: context.titleMedium. copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -391,7 +430,7 @@ class _ChangeChip extends StatelessWidget {
   final bool isPositive;
 
   const _ChangeChip({
-    required this.change,
+    required this. change,
     required this.color,
     required this.isPositive,
   });
@@ -404,7 +443,7 @@ class _ChangeChip extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(AppOpacity.subtle),
+        color: color. withOpacity(AppOpacity.subtle),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -416,10 +455,10 @@ class _ChangeChip extends StatelessWidget {
             size: AppDimensions.iconSm,
           ),
           Text(
-            '${change.abs().toStringAsFixed(2)}%',
+            '${change.abs(). toStringAsFixed(2)}%',
             style: TextStyle(
               color: color,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight. bold,
               fontSize: AppFontSize.sm,
             ),
           ),
