@@ -1,88 +1,81 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:stockmark/core/errors/exceptions.dart';
 
 class StockApiService {
-  // ✅ ใช้ URL ของ Yahoo Finance (ตัวเดียวกับ Trending)
-  final String quoteBaseUrl =
-      "https://query2.finance.yahoo.com/v7/finance/quote";
+  final String chartBaseUrl = "https://query1. finance.yahoo.com/v8/finance/chart";
+  final String quoteBaseUrl = "https://query2.finance.yahoo.com/v7/finance/quote";
 
-  // URL สำหรับดึงรายการหุ้น (Most Active)
-  final String screenerBaseUrl =
-      "https://query2.finance.yahoo.com/v1/finance/screener/predefined/saved";
-
-  // 1. ฟังก์ชันดึง S&P 500 (ต้นเหตุที่ราคาเป็น 0)
   Future<Map<String, dynamic>> fetchSP500() async {
-    final url = Uri.parse("https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=1d&range=1d");
+    final url = Uri.parse("$chartBaseUrl/SPY? interval=1d&range=1d");
 
     try {
-      print("🚀 Fetching S&P 500 (via Chart API): $url");
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final result = json['chart']['result'];
 
-        if (result != null && (result as List).isNotEmpty) {
+        if (result != null && result.isNotEmpty) {
           final meta = result[0]['meta'];
           
-          // ✅ แก้ตรงนี้: เติม ? หลัง num (as num?) เพื่อบอกว่า "อาจจะว่างนะ"
-          // และใช้ ?? 0.0 เพื่อบอกว่า "ถ้าว่าง ให้ใช้ 0.0 แทน"
           final double price = (meta['regularMarketPrice'] as num?)?.toDouble() ?? 
                                (meta['chartPreviousClose'] as num?)?.toDouble() ?? 
                                0.0;
                                
           final double prevClose = (meta['previousClose'] as num?)?.toDouble() ?? 
                                    (meta['chartPreviousClose'] as num?)?.toDouble() ?? 
-                                   price; // ถ้าไม่มีราคาปิด ให้ใช้ราคาปัจจุบันกันหาร 0
+                                   price;
 
-          // คำนวณ % (กันเหนียว: ถ้าตัวหารเป็น 0 ให้ค่า change เป็น 0)
           double change = 0.0;
           if (prevClose > 0) {
             change = ((price - prevClose) / prevClose) * 100;
           }
-
-          print("✅ Yahoo Chart Data: Price=$price, Change=$change%");
           
           return {
-            // ✅ symbol ควรเป็นตัวย่อ (จะไปโชว์ในป้ายมุมขวา)
             'symbol': 'SPY', 
-            
-            // ✅ shortName ควรเป็นชื่อเต็ม (จะไปโชว์เป็นหัวข้อใหญ่)
             'shortName': 'SPDR S&P 500 ETF Trust', 
-            
             'regularMarketPrice': price,
             'regularMarketChangePercent': change,
           };
         }
+        
+        // ✅ ไม่มีข้อมูล
+        throw const NotFoundException('S&P 500 data not found');
+      } else if (response.statusCode == 401) {
+        throw const UnauthorizedException();
+      } else {
+        throw ServerException(
+          'Failed to fetch S&P 500',
+          statusCode: response.statusCode,
+        );
       }
-    } catch (e) {
-      print("❌ Exception S&P 500: $e");
+    } on SocketException {
+      throw const NetworkException();
+    } on FormatException {
+      throw const ServerException('Invalid data format');
     }
-
-    return {
-      'symbol': 'S&SPY ',
-      'shortName': 'SPDR S&P 500 ETF Trust',
-      'regularMarketPrice': 0.0,
-      'regularMarketChangePercent': 0.0,
-    };
   }
 
-  // 2. ฟังก์ชันดึง Most Active (อันนี้ใช้ได้อยู่แล้ว แต่อย่าลืมใส่ไว้กัน Error)กฟไกฟกฟกฟไกฟกฟก
   Future<List<dynamic>> fetchMostActive() async {
-    // ใช้รายชื่อหุ้นดัง (Quote) แทน Screener เพื่อความชัวร์
-    const symbols =
-        "NVDA,TSLA,AAPL,AMZN,MSFT,GOOGL,META,AMD,NFLX,INTC,PLTR,COIN,MSTR";
-    final url = Uri.parse("$quoteBaseUrl?symbols=$symbols");
+    const symbols = "NVDA,TSLA,AAPL,AMZN,MSFT,GOOGL,META,AMD,NFLX,INTC,PLTR,COIN,MSTR";
+    final url = Uri.parse("$quoteBaseUrl? symbols=$symbols");
 
     try {
       final response = await http.get(url);
+      
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         return json['quoteResponse']['result'] as List<dynamic>;
+      } else {
+        throw ServerException(
+          'Failed to fetch stocks',
+          statusCode: response. statusCode,
+        );
       }
-    } catch (e) {
-      print("Error fetching trending: $e");
+    } on SocketException {
+      throw const NetworkException();
     }
-    return [];
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:stockmark/core/errors/error_handler.dart';
+import 'package:stockmark/core/errors/failures.dart';
 import 'package:stockmark/features/news/domain/entities/news_entity.dart';
 import 'package:stockmark/features/news/domain/repositories/news_repository.dart';
 
@@ -13,18 +15,18 @@ class NewProvider extends ChangeNotifier {
   List<NewsEntity> _hotNews = [];
   bool _isLoading = false;
   bool _isHotNewsLoading = false;
-  String? _errorMessage;
+  Failure? _failure; // ✅ เปลี่ยนจาก String?  _errorMessage
 
   // ===== GETTERS =====
   List<NewsEntity> get news => _news;
   List<NewsEntity> get hotNews => _hotNews;
   bool get isLoading => _isLoading;
   bool get isHotNewsLoading => _isHotNewsLoading;
-  String? get errorMessage => _errorMessage;
+  bool get hasError => _failure != null;
 
-  // ✅ Helper Getters
-  bool get isEmpty => _news.isEmpty && _hotNews.isEmpty;
-  bool get hasError => _errorMessage != null;
+  // ✅ ใช้ ErrorHandler แปลงเป็นข้อความ
+  String get errorMessage =>
+      _failure != null ? ErrorHandler.getErrorMessage(_failure!) : '';
 
   // ===== ACTIONS =====
 
@@ -34,9 +36,8 @@ class NewProvider extends ChangeNotifier {
 
     try {
       _news = await repository.getNews();
-      _errorMessage = null;
     } catch (e) {
-      _errorMessage = e.toString();
+      _failure = ErrorHandler.handleException(e);
       _news = [];
     } finally {
       _isLoading = false;
@@ -50,9 +51,8 @@ class NewProvider extends ChangeNotifier {
 
     try {
       _hotNews = await repository.getHotNews();
-      _errorMessage = null;
     } catch (e) {
-      _errorMessage = e.toString();
+      _failure = ErrorHandler.handleException(e);
       _hotNews = [];
     } finally {
       _isHotNewsLoading = false;
@@ -74,9 +74,8 @@ class NewProvider extends ChangeNotifier {
 
       _news = results[0];
       _hotNews = results[1];
-      _errorMessage = null;
     } catch (e) {
-      _errorMessage = e.toString();
+      _failure = ErrorHandler.handleException(e);
       // ถ้าโหลดไม่ผ่าน ให้เคลียร์ข้อมูลเก่า (หรือจะเก็บไว้ก็ได้)
       _news = [];
       _hotNews = [];
