@@ -4,6 +4,7 @@ import 'package:stockmark/core/constants/app_spacing.dart';
 import 'package:stockmark/core/constants/app_string.dart';
 import 'package:stockmark/core/extensions/context_extensions.dart';
 import 'package:stockmark/features/news/presentation/providers/new_provider.dart';
+import 'package:stockmark/features/news/presentation/screens/news_detail_screen.dart';
 import 'package:stockmark/features/news/presentation/widgets/hot_news_section.dart';
 import 'package:stockmark/features/news/presentation/widgets/news_list_section.dart';
 
@@ -94,7 +95,11 @@ class _NewsScreenState extends State<NewsScreen> {
   }
 
   void _handleNewsTap(news) {
-    // TODO: Navigate to news detail
-    debugPrint('Tapped: ${news.title}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NewsDetailScreen(news: news),
+      ),
+    );
   }
 }
