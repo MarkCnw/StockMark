@@ -6,6 +6,7 @@ class NewsEntity {
   final String source; // หมวดหมู่ (Cloud, Finance)
   final String sourceLogoUrl; // รูปโลโก้สำนักข่าว
   final String timeAgo;
+  final String content;
 
   NewsEntity({
     required this.id,
@@ -14,5 +15,6 @@ class NewsEntity {
     required this.source,
     required this.sourceLogoUrl,
     required this.timeAgo,
+   this.content,
   });
 }
