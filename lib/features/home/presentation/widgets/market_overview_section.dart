@@ -6,7 +6,6 @@ import 'package:stockmark/core/constants/app_font_sizes.dart';
 import 'package:stockmark/core/constants/app_opacity.dart';
 import 'package:stockmark/core/constants/app_radius.dart';
 import 'package:stockmark/core/constants/app_spacing.dart';
-
 import 'package:stockmark/core/constants/app_string.dart';
 import 'package:stockmark/core/extensions/context_extensions.dart';
 import 'package:stockmark/features/home/presentation/providers/stock_provider.dart';

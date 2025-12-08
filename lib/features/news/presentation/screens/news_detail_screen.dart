@@ -1,131 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:stockmark/core/constants/app_dimensions.dart';
-import 'package:stockmark/core/constants/app_spacing.dart';
-import 'package:stockmark/core/extensions/context_extensions.dart';
+import 'package:stockmark/core/constants/app_font_sizes.dart';
+import 'package:webview_flutter/webview_flutter.dart'; // ✅ Import ตัวนี้
 import 'package:stockmark/features/news/domain/entities/news_entity.dart';
 
-class NewsDetailScreen extends StatelessWidget {
+class NewsDetailScreen extends StatefulWidget {
   final NewsEntity news;
 
   const NewsDetailScreen({super.key, required this.news});
 
   @override
+  State<NewsDetailScreen> createState() => _NewsDetailScreenState();
+}
+
+class _NewsDetailScreenState extends State<NewsDetailScreen> {
+  late final WebViewController _controller;
+  bool _isLoading = true; // เอาไว้โชว์หมุนๆ ตอนเว็บกำลังโหลด
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 1. ตั้งค่า WebView
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            setState(() {
+              _isLoading = true;
+            });
+          },
+          onPageFinished: (String url) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.news.url)); // ✅ โหลดลิ้งก์ข่าวจริง
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ===== AppBar ปกติ =====
       appBar: AppBar(
-        backgroundColor: context.backgroundColor,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            ClipOval(
-              child: Image.network(
-                news.sourceLogoUrl,
-                width: 24,
-                height: 24,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 24,
-                  height: 24,
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                news.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined),
-            onPressed: () {},
+        title: Text(
+          widget.news.source, // โชว์ชื่อสำนักข่าวบนหัว
+          style: const TextStyle(
+            fontSize: AppFontSize.lg,
+            fontWeight: FontWeight.bold,
           ),
-          IconButton(
-            icon: const Icon(Icons.bookmark_border),
-            onPressed: () {},
-          ),
-        ],
+        ),
+        centerTitle: true,
+        elevation: 0,
       ),
+      body: Stack(
+        children: [
+          // 2. ตัวแสดงเว็บ
+          WebViewWidget(controller: _controller),
 
-      // ===== Body =====
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Hero Image
-            Image.network(
-              news.imageUrl,
-              width: double.infinity,
-              height: 250,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                height: 250,
-                color: Colors.grey[300],
-                child: const Icon(Icons.image, size: 50),
-              ),
-            ),
-
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    news.title,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Source Row
-                  Row(
-                    children: [
-                      ClipOval(
-                        child: Image.network(
-                          news.sourceLogoUrl,
-                          width: 28,
-                          height: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(news.source),
-                      const Text(' • '),
-                      Text(news.timeAgo),
-                    ],
-                  ),
-                 
-
-                  //เส้นคั่นตรงนี้
-                  Divider(
-                    height: AppSpacing.xxxl,
-                    thickness: AppDimensions.dividerThickness,
-                    color: context.dividerColor,
-                  ),
-                  // Content
-                  const Text(
-                    ""
-                  )
-                ],
-              ),
-            ),
-          ],
-        ),
+          // 3. ตัวหมุนๆ (ถ้ากำลังโหลดอยู่ให้โชว์)
+          if (_isLoading) const Center(child: CircularProgressIndicator()),
+        ],
       ),
     );
   }
