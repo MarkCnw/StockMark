@@ -5,6 +5,7 @@ import 'package:stockmark/features/news/domain/entities/news_entity.dart';
 import 'package:stockmark/features/news/domain/repositories/news_repository.dart';
 
 class NewsRepositoryImpl implements NewsRepository {
+  
   final NewsApiService apiService;
 
   NewsRepositoryImpl(this.apiService);

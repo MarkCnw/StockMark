@@ -24,6 +24,8 @@ extension ContextExtensions on BuildContext {
   Color get dividerColor =>
       isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
+  Color get iconColor => textPrimaryColor;
+
   // ===== TEXT STYLES =====
   TextStyle get headlineLarge =>
       AppTextStyles.headlineLarge(isDark: isDark);
@@ -31,6 +33,11 @@ extension ContextExtensions on BuildContext {
       AppTextStyles.headlineMedium(isDark: isDark);
   TextStyle get headlineSmall =>
       AppTextStyles.headlineSmall(isDark: isDark);
+
+  TextStyle get displaySmall => theme.textTheme.displaySmall?.copyWith(
+        color: textPrimaryColor,
+        fontWeight: FontWeight.bold,
+      ) ?? TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: textPrimaryColor);
 
   TextStyle get titleLarge => AppTextStyles.titleLarge(isDark: isDark);
   TextStyle get titleMedium => AppTextStyles.titleMedium(isDark: isDark);

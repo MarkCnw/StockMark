@@ -13,6 +13,7 @@ import 'package:stockmark/features/home/presentation/providers/movers_provider.d
 // Import Movers
 import 'package:stockmark/features/home/data/datasources/movers_api_service.dart';
 import 'package:stockmark/features/home/data/repositories/movers_repository_impl.dart';
+import 'package:stockmark/features/home/presentation/providers/stock_detail_provider.dart';
 
 import 'package:stockmark/features/home/presentation/providers/stock_provider.dart';
 
@@ -44,7 +45,7 @@ class _StockMarkAppState extends State<StockMarkApp> {
     });
   }
 
-  @override
+  @override 
   Widget build(BuildContext context) {
     // 1. Setup Stock (S&P 500)
     final stockApi = StockApiService();
@@ -78,6 +79,10 @@ class _StockMarkAppState extends State<StockMarkApp> {
         // Provider 3: News
         ChangeNotifierProvider(
           create: (_) => NewProvider(newsRepo)..loadAllNews(),
+        ),
+
+        ChangeNotifierProvider(
+          create: (_) => StockDetailProvider(repository: stockRepo),
         ),
       ],
       child: MaterialApp(
