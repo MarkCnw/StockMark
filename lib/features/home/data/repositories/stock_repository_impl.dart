@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:stockmark/features/home/data/datasources/stock_api_service.dart';
+import 'package:stockmark/features/home/data/models/stock_detail_model.dart';
 
 import 'package:stockmark/features/home/data/models/stock_model.dart';
+import 'package:stockmark/features/home/domain/entities/stock_detail_entity.dart';
 import 'package:stockmark/features/home/domain/entities/stock_entity.dart';
 import 'package:stockmark/features/home/domain/repositories/stock_repository.dart';
 
@@ -98,5 +100,47 @@ class StockRepositoryImpl implements StockRepository {
   @override
   Future<List<StockEntity>> searchStocks(String query) async {
     return [];
+  }
+
+  @override
+  Future<StockDetailEntity?> getStockDetail(String symbol) async {
+    // ⚠️ แก้ Return Type เป็น StockDetailEntity? (มี ? ด้วย)
+    try {
+      // 🚀 1. ยิง API 2 ตัวพร้อมกันเหมือนเดิม
+      final results = await Future.wait([
+        api.fetchStockDetail(symbol), // results[0]
+        api.fetchCompanyAbout(symbol), // results[1]
+      ]);
+
+      final quoteData = results[0] as Map<String, dynamic>;
+      final aboutText = results[1] as String;
+
+      // 🛑 2. เพิ่มด่านตรวจกลับมา! (จุดที่หายไป)
+      // ถ้าข้อมูลราคาว่างเปล่า (หาหุ้นไม่เจอ) ให้หยุดเลย
+      if (quoteData.isEmpty) {
+        print("⚠️ Stock data is empty for $symbol");
+        return null;
+      }
+
+      // 🔧 3. สร้าง Map ใหม่เพื่อความปลอดภัย (กัน Error เรื่องแก้ไขข้อมูลไม่ได้)
+      final Map<String, dynamic> combinedData = Map.from(quoteData);
+      combinedData['about'] = aboutText; // ยัด about ลงไป
+
+      // 4. แปลงเป็น Model
+      return StockDetailModel.fromJson(combinedData);
+    } catch (e) {
+      print("❌ Repo Error: $e");
+      // ไม่ต้อง rethrow ก็ได้ ให้ return null เพื่อให้หน้าจอรู้ว่าโหลดไม่ได้
+      return null;
+    }
+  }
+
+  @override
+  Future<List<double>> getStockChart(String symbol) async {
+    try {
+      return await api.fetchStockChart(symbol);
+    } catch (e) {
+      return [];
+    }
   }
 }

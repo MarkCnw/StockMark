@@ -9,6 +9,7 @@ import 'package:stockmark/core/constants/app_spacing.dart';
 import 'package:stockmark/core/constants/app_string.dart';
 import 'package:stockmark/core/extensions/context_extensions.dart';
 import 'package:stockmark/features/home/presentation/providers/stock_provider.dart';
+import 'package:stockmark/features/home/presentation/screens/stock_detail_screen.dart';
 
 /// Market Overview Section - แสดงข้อมูล S&P 500
 class MarketOverviewSection extends StatelessWidget {
@@ -49,12 +50,14 @@ class MarketOverviewSection extends StatelessWidget {
         }
 
         final stock = provider.sp500!;
-        return _MarketCard(
-          name: stock.name,
-          symbol: stock.symbol,
-          price: stock.price,
-          change: stock.change,
-          isPositive: stock.change >= 0,
+        return GestureDetector(onTap: () => StockDetailScreen(stock: stock),
+          child: _MarketCard(
+            name: stock.name,
+            symbol: stock.symbol,
+            price: stock.price,
+            change: stock.change,
+            isPositive: stock.change >= 0,
+          ),
         );
       },
     );

@@ -11,6 +11,7 @@ import 'package:stockmark/core/constants/app_string.dart';
 import 'package:stockmark/core/extensions/context_extensions.dart';
 import 'package:stockmark/features/home/domain/entities/stock_entity.dart';
 import 'package:stockmark/features/home/presentation/providers/movers_provider.dart';
+import 'package:stockmark/features/home/presentation/screens/stock_detail_screen.dart';
 
 /// Top Movers Section - แสดงหุ้นที่มีการเปลี่ยนแปลงมากที่สุด
 class TopMoversSection extends StatefulWidget {
@@ -225,11 +226,21 @@ class _StockList extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
         itemBuilder: (context, index) {
           final stock = stocks[index];
-          return _StockCard(
-            symbol: stock.symbol,
-            name: stock.name,
-            price: stock.price,
-            change: stock.change,
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StockDetailScreen(stock: stock),
+                ),
+              );
+            },
+            child: _StockCard(
+              symbol: stock.symbol,
+              name: stock.name,
+              price: stock.price,
+              change: stock.change,
+            ),
           );
         },
       ),
